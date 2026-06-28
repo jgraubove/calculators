@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conservation Calculators</title>
+    <!-- Lucide Icons for premium visual controls -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --button-bg: #007aff;
+            --button-text: #ffffff;
+            --button-hover: #0062cc;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1c1c1e;
+            --card-bg: #2c2c2e;
+            --text-color: #ffffff;
+            --button-bg: #0a84ff;
+            --button-text: #ffffff;
+            --button-hover: #096fd9;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            position: relative;
+            padding: 4rem 0;
+        }
+
+        .container {
+            max-width: 680px;
+            width: 90%;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 0.75rem;
+        }
+
+        .subtitle {
+            opacity: 0.7;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .subtitle a {
+            color: var(--button-bg);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .subtitle a:hover {
+            text-decoration: underline;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            justify-items: center;
+        }
+
+        /* Box standard variables fallback if no style overrides are present */
+        .app-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 175px; 
+            height: 185px; 
+            background-color: var(--box-bg, var(--button-bg));
+            color: var(--box-text, var(--button-text));
+            text-decoration: none;
+            border-radius: 20px;
+            padding: 1.5rem 1rem;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 4px 14px var(--shadow);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+                        background-color 0.25s ease, 
+                        color 0.25s ease,
+                        box-shadow 0.25s ease;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .btn-title {
+            font-size: 1.05rem;
+            line-height: 1.25;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .btn-subtitle {
+            font-size: 0.78rem;
+            line-height: 1.35;
+            font-weight: 400;
+            opacity: 0.85;
+            color: var(--box-subtitle, inherit);
+        }
+
+        .app-button:hover {
+            transform: translateY(-6px);
+            background-color: var(--box-hover, var(--button-hover));
+            box-shadow: 0 10px 22px var(--shadow);
+        }
+
+        .app-button:active {
+            transform: translateY(-2px);
+        }
+
+        .app-button.empty {
+            background-color: transparent;
+            box-shadow: none;
+            pointer-events: none;
+            border: 2px dashed var(--border-color);
+            color: var(--text-color);
+            opacity: 0.4;
+        }
+
+        /* Action Buttons and Settings Control */
+        .controls-wrapper {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 0.75rem;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: transform 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+            color: var(--text-color);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.08);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            background: #1d1d1f;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 2rem 0;
+            }
+
+            .container {
+                width: 95%;
+            }
+
+            .app-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .app-button {
+                width: 145px;
+                height: 165px;
+                padding: 1rem 0.75rem;
+            }
+
+            .btn-title {
+                font-size: 0.95rem;
+            }
+
+            .btn-subtitle {
+                font-size: 0.7rem;
+            }
+
+            .controls-wrapper {
+                top: auto;
+                bottom: 2rem;
+                right: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Theme Control Menu -->
+    <div class="controls-wrapper">
+        <!-- Light/Dark Theme Toggle -->
+        <div class="control-btn" id="themeToggle" aria-label="Toggle theme">
+            <i data-lucide="sun" id="themeIcon" style="width: 20px; height: 20px;"></i>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Conservation Calculators</h1>
+            <p class="subtitle">Apps and calculators for preventive conservation by the <a href="https://www.ucl.ac.uk/bartlett/environment-energy-resources/heritage" target="_blank">UCL Institute for Sustainable Heritage</a> and collaborators.</p>
+        </header>
+
+        <div class="app-grid" id="appGrid">
+            <!-- App 1 -->
+            <a href="https://conservationcalculators.com/app.html" class="app-button" target="_blank" id="app1" style="--box-bg: #007aff; --box-hover: #0056b3; --box-text: #ffffff;">
+                <div class="btn-title">Preventive<br>Conservation<br>Calculator</div>
+                <div class="btn-subtitle">Convert T and RH to degradation indices</div>
+            </a>
+
+            <!-- App 2 -->
+            <a href="https://conservationcalculators.com/dust.html" class="app-button" target="_blank" id="app2" style="--box-bg: #B3AFAF; --box-hover: #837C7C; --box-text: #ffffff;">
+                <div class="btn-title">Dust<br>Simulator</div>
+                <div class="btn-subtitle">Visualise dust deposition rates on 3D models of objects.</div>
+            </a>
+            
+            <!-- App 3 
+            <a href="https://conservationcalculators.com/rhdiff.html" class="app-button" target="_blank" id="app3" style="--box-bg: #af52de; --box-hover: #8e44ad; --box-text: #ffffff;">
+                <div class="btn-title">Are my RH<br>measurements<br>different?</div>
+                <div class="btn-subtitle">Conducts a statistical test considering measurement error.</div>
+            </a>
+			-->
+            
+            <!-- App 4 -->
+            <a href="https://josepgrau.shinyapps.io/IMPACT/" class="app-button" target="_blank" id="app4" style="--box-bg: #34c759; --box-hover: #2BA64A; --box-text: #ffffff;">
+                <div class="btn-title">IMPACT<br>Pollutant<br>Model</div>
+                <div class="btn-subtitle">Predicts indoor concentrations of pollutants.</div>
+            </a>
+
+            <!-- App 5 
+            <a href="https://conservationcalculators.com/plots.html" class="app-button" target="_blank" id="app5" style="--box-bg: #ff9500; --box-hover: #e07b00; --box-text: #ffffff;">
+                <div class="btn-title">The 5 preventive<br>conservation<br>plots</div>
+                <div class="btn-subtitle">Generate and interprete plots from T and RH data.</div>
+            </a>
+			-->
+			
+			<!-- App 6 -->
+            <a href="https://conservationcalculators.com/survey.html" class="app-button" target="_blank" id="app5" style="--box-bg: #442899; --box-hover: #2e1a6b; --box-text: #ffffff;">
+                <div class="btn-title">Collection<br>Survey<br>App</div>
+                <div class="btn-subtitle">Plan and analyse collection surveys statistically.</div>
+            </a>
+			
+
+            <!-- Empty Placeholders -->
+            <div class="app-button empty"><div class="btn-title">Coming<br>Soon</div><div class="btn-subtitle"></div></div>
+            <div class="app-button empty"><div class="btn-title">Coming<br>Soon</div><div class="btn-subtitle"></div></div>
+            <div class="app-button empty"><div class="btn-title">Coming<br>Soon</div><div class="btn-subtitle"></div></div>
+            <div class="app-button empty"><div class="btn-title">Coming<br>Soon</div><div class="btn-subtitle"></div></div>
+            <div class="app-button empty"><div class="btn-title">Coming<br>Soon</div><div class="btn-subtitle"></div></div>
+        </div>
+    </div>
+
+    <!-- Feedback Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const toast = document.getElementById('toast');
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Theme Management
+        function updateThemeIcon() {
+            if (document.body.getAttribute('data-theme') === 'dark') {
+                themeIcon.setAttribute('data-lucide', 'moon');
+            } else {
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
+            lucide.createIcons();
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+            } else {
+                document.body.removeAttribute('data-theme');
+            }
+            updateThemeIcon();
+            localStorage.setItem('theme', theme);
+        }
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = localStorage.getItem('theme');
+
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else {
+            applyTheme(prefersDark ? 'dark' : 'light');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        // Feedback toast utility (ready if needed for other actions)
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

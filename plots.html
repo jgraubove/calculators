@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 6 Preventive Conservation Plots</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- External Scientific Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.27.0/dist/plotly.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        .plot-container {
+            height: 420px;
+            width: 100%;
+        }
+        /* Custom scrollbar for a cleaner dashboard look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col font-sans">
+
+    <!-- Top Header / Navbar -->
+    <header class="bg-white border-b border-slate-200 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <div class="p-3 bg-brand-100 text-brand-700 rounded-xl mt-0.5">
+                    <i data-lucide="line-chart" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-900 leading-tight tracking-tight">The 6 Preventive Conservation Plots</h1>
+                    <p class="text-sm text-slate-500 mt-1 max-w-2xl">This app generates 5 useful visualisations for preventive conservation and explains how to read them and interpret the data. Provided by the <a href="https://www.ucl.ac.uk/bartlett/environment-energy-resources/heritage" target="_blank" class="text-brand-600 hover:underline">UCL Institute for Sustainable Heritage. <a/> </p>
+                </div>
+            </div>
+            <div class="text-xs text-slate-400 font-medium self-start md:self-auto flex items-center gap-2" id="metaInfo"> 	
+                <button onclick="openAboutModal()" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-3.5 rounded-full text-xs font-semibold transition-all">
+                    <i data-lucide="info" class="w-4 h-4 text-slate-500"></i>
+                    <span>About the App</span>
+                </button>
+                <span id="genDate" class="hidden sm:inline bg-slate-100 py-2 px-3.5 rounded-full text-slate-600 font-semibold">Waiting for data upload...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- About Modal Dialog Container -->
+    <div id="aboutModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-xl relative transition-all duration-200">
+            <button onclick="closeAboutModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <div class="flex items-start gap-3">
+                <div class="p-2.5 bg-brand-100 text-brand-700 rounded-xl">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">About the App</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Understanding Climate Metrics for Heritage Spaces</p>
+                </div>
+            </div>
+
+            <div class="mt-4 space-y-3.5 text-xs text-slate-600 leading-relaxed">
+                <p>
+                    There are <strong class="text-slate-900 font-bold">5 visualisations</strong> all preventive conservators should know how to read:
+                </p>
+								
+				<ul class="list-disc pl-5 space-y-1.5">
+					<li><strong class="text-slate-900 font-bold">Plot 1: Time Series</strong> - See how temperature and relative humidity change sequentially over time.</li>
+					<li><strong class="text-slate-900 font-bold">Plot 2: Scatterplot</strong> - See how T and RH are related. </li>
+					<li><strong class="text-slate-900 font-bold">Plot 3: Psychrometric Space Map</strong> - See absolute moisture levels, useful to infer the potential for heating and dehumidification.</li>
+					<li><strong class="text-slate-900 font-bold">Plot 4: Frequency Histograms</strong> - See the statistical counts and spread of measurement occurrences.</li>
+					<li><strong class="text-slate-900 font-bold">Plot 5: Period Barplot</strong> - See trends by grouping microclimatic variables into years or months.</li>
+					<li><strong class="text-slate-900 font-bold">Plot 6: Density Heatmap</strong> - Ok, this one is uncommon. But it is powerful and interpreting heatmaps is a useful skill. Allows to see the importance of clusters of overlapping datapoints. </li>
+				</ul>
+
+                <p class="pt-2 border-t border-slate-100">
+                    To make these interpretations clear and effective, the application utilizes the <strong class="text-slate-900 font-bold">ALEC framework</strong>. This is a simple way to remember how to structure the description of a plot:
+                </p>
+                
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-2 gap-2 text-[12px]">
+                    <div><span class="font-bold text-brand-600">1. A</span><span class="text-slate-500">xes - First state the meaning of each axis.</span></div>
+                    <div><span class="font-bold text-brand-600">2. L</span><span class="text-slate-500">ines - Describe what the lines and points mean.</span></div>
+                    <div><span class="font-bold text-brand-600">3. E</span><span class="text-slate-500">xample - Illustrate the meaning of the lines with an example datapoint.</span></div>
+                    <div><span class="font-bold text-brand-600">4. C</span><span class="text-slate-500">onclusion - Always end with an overall take-home message.</span></div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeAboutModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all">
+                    Close Dialogue
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Panel -->
+    <main class="flex-1 overflow-y-auto max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Custom Notification Banner -->
+        <div id="alertBanner" class="hidden mb-6 p-4 rounded-xl border flex items-start gap-3 transition-all duration-300">
+            <div id="alertIcon" class="shrink-0 mt-0.5"></div>
+            <div class="flex-1">
+                <h3 id="alertTitle" class="text-sm font-semibold">Alert</h3>
+                <p id="alertMessage" class="text-xs mt-1 text-slate-600"></p>
+            </div>
+            <button onclick="hideAlert()" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Dashboard States -->
+        <div class="space-y-6">
+            
+            <!-- Upload Area & Configuration -->
+            <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <!-- Dropzone Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="file-up" class="w-5 h-5 text-slate-400"></i> Import Climate Dataset
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">Accepts Excel spreadsheets (.xlsx, .xls) and Plain Text tables (.csv).</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <div id="dropZone" class="border-2 border-dashed border-slate-200 hover:border-brand-500 rounded-xl p-5 text-center cursor-pointer bg-slate-50/50 hover:bg-brand-50/20 transition-all group">
+                            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="hidden">
+                            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-2 text-slate-400 group-hover:text-brand-500 group-hover:scale-110 transition-all">
+                                <i data-lucide="cloud-lightning" class="w-5 h-5"></i>
+                            </div>
+                            <p class="text-xs font-semibold text-slate-700">Drag & drop or <span class="text-brand-600 hover:underline">browse</span></p>
+                            <p class="text-[10px] text-slate-400 mt-1">Date, T, RH columns. Conversions are automatic.</p>
+                        </div>
+                    </div>
+                </div>
+
+<!-- Live Calibration Configuration -->
+                <div id="timeConfig" class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-300">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="sliders" class="w-5 h-5 text-slate-400"></i> Timeline Calibration
+                            </h2>
+								<label class="relative inline-flex items-center cursor-pointer select-none" title="Check this box to discard timestamps and add custom ones.">
+									<span class="text-[10px] uppercase font-bold text-slate-400 mr-2 tracking-wider leading-none self-center">Override</span>
+									<div class="relative">
+										<input type="checkbox" id="manualOverrideToggle" class="sr-only peer" onchange="toggleManualOverride(this.checked)">
+										<div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+									</div>
+								</label>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Configure or override time increments for sequential parsing.</p>
+                        
+                        <div id="calibrationFormFields" class="space-y-3 mt-4 opacity-50 pointer-events-none transition-all duration-200">
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1">First Date/Time</label>
+                                <input type="datetime-local" id="firstDate" class="w-full text-xs rounded-lg border border-slate-200 p-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1">Sampling Frequency</label>
+                                <select id="frequency" class="w-full text-xs rounded-lg border border-slate-200 p-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                                    <option value="hourly" selected>Hourly (60 min)</option>
+                                    <option value="30min">Every 30 minutes</option>
+                                    <option value="15min">Every 15 minutes</option>
+                                    <option value="5min">Every 5 minutes</option>
+                                    <option value="daily">Daily</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-2">
+                        <button onclick="generatePlots()" class="w-full py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="play" class="w-4 h-4"></i> Run Analysis
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Limits Guard Configuration -->
+                <div id="limitsConfig" class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm transition-all duration-300">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="shield-alert" class="w-5 h-5 text-slate-400"></i> Set environmental limits
+                            </h2>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="enableLimitsToggle" class="sr-only peer" onchange="toggleLimits(this.checked)">
+                                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+                            </label>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Superimpose conservation standards and guidelines to test compliance levels.</p>
+                        
+                        <!-- Limit Parameters panel -->
+                        <div id="limitsParams" class="hidden space-y-3 mt-3">
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1">Standard Criteria</label>
+                                <select id="limitPreset" onchange="selectPreset(this.value)" class="w-full text-xs rounded-lg border border-slate-200 p-2 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
+                                    <option value="bizot" selected>Bizot Group (15-25°C, 40-65% RH)</option>
+                                    <option value="ashrae">ASHRAE Class AA (15-25°C, 45-55% RH)</option>
+                                    <option value="nt">National Trust (5-22°C, 50-65% RH)</option>
+                                    <option value="custom">Custom Limits...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">T Min (°C)</label>
+                                    <input type="number" id="limitTMin" step="0.5" oninput="onCustomLimitChange()" class="w-full text-xs rounded-lg border border-slate-200 p-2 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-100 font-semibold" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">T Max (°C)</label>
+                                    <input type="number" id="limitTMax" step="0.5" oninput="onCustomLimitChange()" class="w-full text-xs rounded-lg border border-slate-200 p-2 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-100 font-semibold" disabled>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">RH Min (%)</label>
+                                    <input type="number" id="limitRHMin" step="1" oninput="onCustomLimitChange()" class="w-full text-xs rounded-lg border border-slate-200 p-2 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-100 font-semibold" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">RH Max (%)</label>
+                                    <input type="number" id="limitRHMax" step="1" oninput="onCustomLimitChange()" class="w-full text-xs rounded-lg border border-slate-200 p-2 focus:ring-2 focus:ring-brand-500 outline-none bg-slate-100 font-semibold" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deactivated Status panel -->
+                        <div id="limitsDisabledPlaceholder" class="py-10 text-center text-slate-400 text-xs">
+                            <i data-lucide="shield-off" class="w-7 h-7 mx-auto mb-2 opacity-55"></i>
+                            Climatic limits currently inactive.
+                        </div>
+                    </div>
+                    
+                    <div id="limitsApplyContainer" class="hidden mt-4 pt-2 border-t border-slate-100">
+                        <button onclick="applyLimitsAndReplot()" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Update Compliance
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="hidden space-y-6">
+                
+                <!-- Quick Stats Ribbons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Samples</p>
+                            <p class="text-2xl font-extrabold text-slate-900 mt-0.5" id="stat-count">-</p>
+                        </div>
+                        <div class="p-2.5 bg-slate-100 text-slate-600 rounded-lg">
+                            <i data-lucide="database" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider text-rose-500 font-bold">Avg Temperature</p>
+                            <p class="text-2xl font-extrabold text-slate-900 mt-0.5" id="stat-avg-temp">-</p>
+                        </div>
+                        <div class="p-2.5 bg-rose-50 text-rose-600 rounded-lg">
+                            <i data-lucide="thermometer" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider text-blue-500 font-bold">Avg Rel. Humidity</p>
+                            <p class="text-2xl font-extrabold text-slate-900 mt-0.5" id="stat-avg-rh">-</p>
+                        </div>
+                        <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                            <i data-lucide="droplet" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="shadow-sm">
+                        <button id="downloadBtn" onclick="exportPDF()" class="w-full h-full py-4 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="file-text" class="w-5 h-5"></i> Export output in PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs and Plots Workspace -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                        <nav class="flex flex-wrap gap-1.5" id="plotTabs">
+                            <button onclick="switchTab('time')" id="btn-tab-time" class="tab-btn px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm border border-slate-200 text-brand-700">Plot 1: Time Series</button>
+                            <button onclick="switchTab('scatter')" id="btn-tab-scatter" class="tab-btn px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">Plot 2: Scatter (T vs RH)</button>
+                            <button onclick="switchTab('psychro')" id="btn-tab-psychro" class="tab-btn px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">Plot 3: Psychrometric</button>
+                            <button onclick="switchTab('distributions')" id="btn-tab-distributions" class="tab-btn px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">Plot 4: Distribution spreads</button>
+                            <button onclick="switchTab('period')" id="btn-tab-period" class="tab-btn px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">Plot 5: Period Analysis</button>
+                            <button onclick="switchTab('correlation')" id="btn-tab-correlation" class="tab-btn px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">Plot 6: Density Heatmap</button>
+                            <button onclick="switchTab('summary')" id="btn-tab-summary" class="tab-btn px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">Summary Stats</button>
+                        </nav>
+                    </div>
+
+                    <!-- Tabs Panes container -->
+                    <div class="p-6">
+                        
+                        <!-- Tab 1: Time Series -->
+                        <div class="tab-pane block" id="tab-time">
+                            <div id="plot-time" class="plot-container"></div>
+                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border-l-4 border-brand-500">
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    <strong class="text-slate-900 font-bold">Plot 1: Environmental Time Series profile:</strong> This is a fundamental map in Preventive Conservation. It shows the evolution of temperature (red curve, left vertical axis) and relative humidity (blue curve, right vertical axis) sequentially over time (horizontal axis).
+                                    <span id="tsLimitsDesc" class="hidden text-brand-700 font-semibold block mt-1">Dashed horizontal bounds have been overlayed showing your active compliance thresholds.</span>
+                                    <br><br>
+                                    As a general rule, plots should be read and explained as follows. First, identify the axes. Here the horizontal axis shows time, and the vertical ones show $T$ and $RH$. Second, describe the lines or points. Here the lines describe the change in $T$ (red) and $RH$ (blue). Third, it is often useful to include an example, in this case it can be pointed out that frequently $RH$ decreases when $T$ increases. Finally, end with a take home message, for example that the environment is changeable or it shows remarkable seasonality. 
+                                    <br><br>
+                                    I like to call this method ALEC, for Axes, Lines, Example, Conclusion.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab 2: Scatter Plot -->
+                        <div class="tab-pane hidden" id="tab-scatter">
+                            <div id="plot-scatter" class="plot-container"></div>
+                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border-l-4 border-brand-500">
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    <strong class="text-slate-900 font-bold">Plot 2: Bivariate Scatter distribution:</strong> This visualization translates raw concurrent datasets into a spatial pattern.
+                                    <span id="scatterLimitsDesc" class="hidden text-brand-700 font-semibold block mt-1">A transparent target bounding box is overlaid to show how many logging points drifted outside the recommended zone.</span>
+                                    <br><br>
+                                    To read this plot with ALEC: First, check the <strong>Axes</strong>. The horizontal axis represents Dry Bulb Temperature ($T$ in $^\circ\text{C}$), and the vertical axis represents Relative Humidity ($RH$ in $\%$). Second, describe the <strong>Lines/Points</strong>. Instead of sequential curves, each individual dot represents a single, concurrent $T$ and $RH$ logging measurement. Third, locate a clear <strong>Example</strong>. For instance, a highly dense, circular cluster of dots around $20\text{ }^\circ\text{C}$ and $50\%$ indicates a stable, well-controlled target microclimate, while dots wandering out into the margins (e.g., bottom-right or top-left corners) represent notable climatic stress events. Finally, draw a <strong>Conclusion</strong>. The overall shape and dispersion of this "point cloud" immediately reveals if the building's thermal envelope keeps the collection safe or lets it drift into high-risk structural decay regions.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab 3: Psychrometric Chart -->
+                        <div class="tab-pane hidden" id="tab-psychro">
+                            <div id="plot-psychro" class="plot-container"></div>
+                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border-l-4 border-brand-500">
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    <strong class="text-slate-900 font-bold">Plot 3: Psychrometric Chart:</strong> This is a thermodynamic snapshot that allows us to see absolute moisture levels in the air, bypassing temperature-dependent variables.
+                                    <span id="psychLimitsDesc" class="hidden text-brand-700 font-semibold block mt-1">An exact thermodynamic target zone (shaped to curve along constant relative humidity tracks between the temperature limits) is displayed.</span>
+                                    <br><br>
+                                    We decode this complex chart using ALEC: First, identify the <strong>Axes</strong>. The horizontal axis represents Dry Bulb Temperature ($T$ in $^\circ\text{C}$), while the vertical axis represents the Humidity Ratio or Absolute Moisture ($W$ in $g/\text{kg}$ of dry air). Second, describe the <strong>Lines/Points</strong>. The curved background lines represent lines of constant $RH$ (curving up to the top-left red $100\%$ saturation boundary line), and the blue markers represent your actual measurements. Third, pick an <strong>Example</strong>. If you observe data points moving horizontally from left to right, this shows temperature is rising while absolute moisture remains constant—causing $RH$ to drop even though no physical water was actually removed. Finally, form a <strong>Conclusion</strong>. By tracing where your points fall relative to the curvature, you can identify if there is an active danger of moisture addition leading to condensation or active drying leading to organic brittleness.
+                                </p>
+                            </div>
+                        </div>
+                            
+                        <!-- Tab 4: T & RH Distributions Side-by-Side -->
+                        <div class="tab-pane hidden" id="tab-distributions">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="bg-slate-50/40 p-3 rounded-xl border border-slate-100">
+                                    <div id="plot-tempdist" class="plot-container"></div>
+                                </div>
+                                <div class="bg-slate-50/40 p-3 rounded-xl border border-slate-100">
+                                    <div id="plot-rhdist" class="plot-container"></div>
+                                </div>
+                            </div>
+                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border-l-4 border-brand-500">
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    <strong class="text-slate-900 font-bold">Plot 4: Frequency Histograms:</strong> This side-by-side view shows the statistical spread of your microclimate variables over the entire log duration.
+                                    <span id="histLimitsDesc" class="hidden text-brand-700 font-semibold block mt-1">Vertical dashed lines highlight target parameters directly over the occurrences bars.</span>
+                                    <br><br>
+                                    Using ALEC to interpret histograms: First, look at the <strong>Axes</strong>. For both plots, the horizontal axis shows the parameter values ($T$ in $^\circ\text{C}$ or $RH$ in $\%$), while the vertical axis shows the absolute frequency or count of hours spent in each bin. Second, observe the <strong>Lines/Bars</strong>. The height of each vertical column shows how often the environment fell into that narrow range. Third, analyze an <strong>Example</strong>. A single, tall, sharp column (unimodal peak) represents an exceptionally stable, unwavering climate, while a broad shape or two separate peaks (bimodal) indicates that the room shifts between two distinct states (like heating-cooling seasons or day-night cycles). Finally, establish a <strong>Conclusion</strong>. Rather than hiding variations behind simple mathematical averages, histograms visually confirm if your collections spend significant periods of time outside safe museum limits.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Tab 5: Period Analysis Plot -->
+                        <div class="tab-pane hidden" id="tab-period">
+                            <div class="flex flex-wrap gap-4 mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <div>
+                                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Group Data By</label>
+                                    <select id="periodGroup" onchange="generatePlots(true)" class="text-xs rounded-lg border border-slate-200 p-2 outline-none font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-brand-500">
+                                        <option value="month" selected>Month</option>
+                                        <option value="week">Week</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Metric to Display</label>
+                                    <select id="periodMetric" onchange="generatePlots(true)" class="text-xs rounded-lg border border-slate-200 p-2 outline-none font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-brand-500">
+                                        <option value="boxT">Boxplot: Temperature</option>
+                                        <option value="boxRH">Boxplot: Relative Humidity</option>
+                                        <option value="iqrT">IQR Bar: Temperature</option>
+                                        <option value="iqrRH">IQR Bar: Relative Humidity</option>
+                                        <option value="medT">Median Bar: Temperature</option>
+                                        <option value="medRH">Median Bar: Relative Humidity</option>
+                                        <option value="spec">Days within Spec (Requires Limits)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="plot-period" class="plot-container"></div>
+                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border-l-4 border-brand-500">
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    <strong class="text-slate-900 font-bold">Plot 5: Period Analysis:</strong> This plot aggregates the continuous data into distinct timeframes (months or weeks) to evaluate stability trends. By looking at distributions (Boxplots or isolated IQR bars) or simple medians, you can clearly track seasonal changes, pinpoint specific periods of microclimatic volatility, or analyze how long the environment stays within safety specifications across the year.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Tab 6: Correlation Heatmap -->
+                        <div class="tab-pane hidden" id="tab-correlation">
+                            <div id="plot-heatmap" class="plot-container"></div>
+                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border-l-4 border-brand-500">
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    <strong class="text-slate-900 font-bold">Plot 6: Climate State Density Heatmap:</strong> This plot simplifies thousands of overlapping points into a clear frequency-concentration grid.
+                                    <span id="heatmapLimitsDesc" class="hidden text-brand-700 font-semibold block mt-1">The recommended microclimatic compliance region has been outlined in high-contrast blue dashed boundaries.</span>
+                                    <br><br>
+                                    Let's read this visualization using ALEC: First, note the <strong>Axes</strong>. The horizontal axis partitions Temperature ($T$) intervals, and the vertical axis partitions Relative Humidity ($RH$) intervals. Second, interpret the <strong>Lines/Grid</strong>. Instead of points or curves, this is a grid of cells colored from cool green-blue to bright yellow, where brighter colors represent a higher density of concurrent readings. Third, look for an <strong>Example</strong>. A bright yellow cell at $19\text{ }^\circ\text{C}$ and $48\%$ $RH$ represents the steady-state microclimate where the collection spent the vast majority of its time. Finally, draw a <strong>Conclusion</strong>. By highlighting density hotspots, rare outlier events (like a door being left open during maintenance) fade into the background, leaving you with an unclouded view of your HVAC system's actual day-to-day performance baseline.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Tab 7: Summary Statistics (Robust Focused) -->
+                        <div class="tab-pane hidden" id="tab-summary">
+                            <div id="summary-compliance-widget" class="mb-6"></div>
+                            <div id="summary-stats" class="space-y-6"></div>
+                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border-l-4 border-brand-500">
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    <strong class="text-slate-900 font-bold">Educational Insight: Robust vs. Parametric Statistics:</strong> Traditional metrics (Mean, SD) are highly sensitive to brief spikes—such as sensor calibration errors or opening a door. **Robust statistics** (like Median, Interquartile Range, and the 5th/95th percentiles) give a far more accurate representation of the steady-state conditions that collections actually experience.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 shrink-0">
+        <p>This calculator is freely distributed under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">GPL-3.0</a>. You can cite it as [Grau-Bové, Josep. (2026). "The 6 Preventive Conservation Plots". UCL Institute for Sustainable Heritage.]</p>
+    </footer>
+
+    <script>
+        // Global Data Objects
+        let tData = [];
+        let rhData = [];
+        let timeData = [];
+        let statSummary = {};
+        let fileHasNativeDates = false;
+
+        // Limits Configurations
+        let limitsEnabled = false;
+        let limitPreset = 'bizot'; // 'bizot', 'ashrae', 'nt', 'custom'
+        let limitTMin = 15;
+        let limitTMax = 25;
+        let limitRHMin = 40;
+        let limitRHMax = 65;
+
+        // Robust Date utils - Solves 'Week 1 2020' Hallucination 
+        function getWeekString(date) {
+            if (!date || isNaN(date.getTime())) return 'Unknown';
+            const year = date.getFullYear();
+            const start = new Date(year, 0, 1);
+            const days = Math.floor((date - start) / 86400000);
+            const weekNo = Math.ceil((days + 1) / 7);
+            return `${year}-W${String(weekNo).padStart(2, '0')}`;
+        }
+
+        // Custom Notification Controller
+        function showAlert(title, message, type = 'danger') {
+            const banner = document.getElementById('alertBanner');
+            const icon = document.getElementById('alertIcon');
+            const titleEl = document.getElementById('alertTitle');
+            const msgEl = document.getElementById('alertMessage');
+            
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+
+            if (type === 'danger') {
+                banner.className = "mb-6 p-4 rounded-xl border flex items-start gap-3 transition-all duration-300 bg-rose-50 border-rose-200 text-rose-800";
+                icon.innerHTML = `<i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600"></i>`;
+            } else if (type === 'warning') {
+                banner.className = "mb-6 p-4 rounded-xl border flex items-start gap-3 transition-all duration-300 bg-amber-50 border-amber-200 text-amber-800";
+                icon.innerHTML = `<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>`;
+            } else {
+                banner.className = "mb-6 p-4 rounded-xl border flex items-start gap-3 transition-all duration-300 bg-emerald-50 border-emerald-200 text-emerald-800";
+                icon.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>`;
+            }
+            
+            banner.classList.remove('hidden');
+            lucide.createIcons();
+            
+            banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBanner').classList.add('hidden');
+        }
+
+        // ==================== ABOUT BOX MODAL CONTROLLER ====================
+        function openAboutModal() {
+            const modal = document.getElementById('aboutModal');
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeAboutModal() {
+            const modal = document.getElementById('aboutModal');
+            modal.classList.add('hidden');
+        }
+
+        // ==================== LIMITS CONTROLLER FUNCTIONS ====================
+        function toggleLimits(enabled) {
+            limitsEnabled = enabled;
+            const paramsDiv = document.getElementById('limitsParams');
+            const placeholder = document.getElementById('limitsDisabledPlaceholder');
+            const applyDiv = document.getElementById('limitsApplyContainer');
+            
+            const descs = ['tsLimitsDesc', 'scatterLimitsDesc', 'psychLimitsDesc', 'histLimitsDesc', 'heatmapLimitsDesc'];
+            
+            if (enabled) {
+                paramsDiv.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                applyDiv.classList.remove('hidden');
+                selectPreset(document.getElementById('limitPreset').value);
+                descs.forEach(id => document.getElementById(id)?.classList.remove('hidden'));
+            } else {
+                paramsDiv.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                applyDiv.classList.add('hidden');
+                descs.forEach(id => document.getElementById(id)?.classList.add('hidden'));
+            }
+            
+            if (tData.length > 0) {
+                generatePlots(true); // fast re-plot
+            }
+        }
+
+        function selectPreset(val) {
+            limitPreset = val;
+            const tMinInput = document.getElementById('limitTMin');
+            const tMaxInput = document.getElementById('limitTMax');
+            const rhMinInput = document.getElementById('limitRHMin');
+            const rhMaxInput = document.getElementById('limitRHMax');
+            
+            if (val === 'bizot') {
+                limitTMin = 15;
+                limitTMax = 25;
+                limitRHMin = 40;
+                limitRHMax = 65;
+                setInputsDisabled(true);
+            } else if (val === 'ashrae') {
+                limitTMin = 15;
+                limitTMax = 25;
+                limitRHMin = 45;
+                limitRHMax = 55;
+                setInputsDisabled(true);
+            } else if (val === 'nt') {
+                limitTMin = 5;
+                limitTMax = 22;
+                limitRHMin = 50;
+                limitRHMax = 65;
+                setInputsDisabled(true);
+            } else if (val === 'custom') {
+                setInputsDisabled(false);
+                limitTMin = parseFloat(tMinInput.value) || 15;
+                limitTMax = parseFloat(tMaxInput.value) || 25;
+                limitRHMin = parseFloat(rhMinInput.value) || 40;
+                limitRHMax = parseFloat(rhMaxInput.value) || 65;
+            }
+            
+            tMinInput.value = limitTMin;
+            tMaxInput.value = limitTMax;
+            rhMinInput.value = limitRHMin;
+            rhMaxInput.value = limitRHMax;
+        }
+
+        function setInputsDisabled(disabled) {
+            document.getElementById('limitTMin').disabled = disabled;
+            document.getElementById('limitTMax').disabled = disabled;
+            document.getElementById('limitRHMin').disabled = disabled;
+            document.getElementById('limitRHMax').disabled = disabled;
+            
+            const inputs = ['limitTMin', 'limitTMax', 'limitRHMin', 'limitRHMax'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (disabled) {
+                    el.classList.add('bg-slate-100');
+                    el.classList.remove('bg-white');
+                } else {
+                    el.classList.remove('bg-slate-100');
+                    el.classList.add('bg-white');
+                }
+            });
+        }
+
+        function onCustomLimitChange() {
+            limitTMin = parseFloat(document.getElementById('limitTMin').value) || 0;
+            limitTMax = parseFloat(document.getElementById('limitTMax').value) || 0;
+            limitRHMin = parseFloat(document.getElementById('limitRHMin').value) || 0;
+            limitRHMax = parseFloat(document.getElementById('limitRHMax').value) || 0;
+        }
+
+        function applyLimitsAndReplot() {
+            if (tData.length > 0) {
+                generatePlots(true);
+                showAlert('Environmental limits applied', 'Compliance calculations and plotting guides updated successfully.', 'success');
+            } else {
+                showAlert('No Dataset Active', 'Please upload a dataset prior to applying custom guards.', 'warning');
+            }
+        }
+
+        // ==================== TAB HANDLING ====================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('block'));
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all";
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).classList.add('block');
+
+            const activeBtn = document.getElementById(`btn-tab-${tabId}`);
+            activeBtn.className = "tab-btn px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm border border-slate-200 text-brand-700";
+
+            setTimeout(() => {
+                const activePane = document.getElementById(`tab-${tabId}`);
+                if (activePane) {
+                    const plots = activePane.querySelectorAll('.plot-container');
+                    plots.forEach(plot => {
+                        Plotly.Plots.resize(plot);
+                    });
+                }
+            }, 50);
+        }
+
+        // ==================== ROBUST DATA CONVERTERS ====================
+        function parseRobustFloat(val) {
+            if (val === undefined || val === null) return NaN;
+            if (typeof val === 'number') return val;
+            
+            let str = String(val).trim();
+            if (!str) return NaN;
+
+            str = str.replace(/[°C|°F|%|RH|\s]/gi, '');
+
+            if (str.includes(',') && !str.includes('.')) {
+                str = str.replace(',', '.');
+            } else if (str.includes(',') && str.includes('.')) {
+                if (str.indexOf(',') < str.indexOf('.')) {
+                    str = str.replace(/,/g, '');
+                } else {
+                    str = str.replace(/\./g, '').replace(',', '.');
+                }
+            }
+            
+            const parsed = parseFloat(str);
+            return isNaN(parsed) ? NaN : parsed;
+        }
+
+ // Upgraded Date utils - Fixes 12-hour AM/PM clipping
+        function parseRobustDate(val) {
+            if (val === undefined || val === null || val === '') return null;
+            if (val instanceof Date) {
+                if (isNaN(val.getTime())) return null;
+                if (val.getFullYear() < 1900) return null; 
+                return val;
+            }
+
+            if (typeof val === 'number') {
+                if (val > 20000 && val < 100000) {
+                    const jsDate = new Date((val - 25569) * 86400 * 1000);
+                    return isNaN(jsDate.getTime()) ? null : jsDate;
+                }
+                if (val > 1000000000000) {
+                    const tsDate = new Date(val);
+                    if (!isNaN(tsDate.getTime())) return tsDate;
+                }
+                return null;
+            }
+
+            let str = String(val).trim();
+            if (!str || str.length < 5 || /^[\d\.]+$/.test(str) || /week/i.test(str) || /^(na|nan|date|time)$/i.test(str)) return null;
+
+            // Strategy 1: Attempt native JS parsing (excellent at recognizing standard AM/PM strings)
+            let nativeTry = new Date(str);
+            if (!isNaN(nativeTry.getTime()) && nativeTry.getFullYear() >= 1900 && nativeTry.getFullYear() <= 2100) {
+                return nativeTry;
+            }
+
+            // Strategy 2: Clean up common spacing artifacts but keep AM/PM tokens for fallback regex parsing
+            let ampmMatch = str.match(/(am|pm)/i);
+            let ampmToken = ampmMatch ? ' ' + ampmMatch[0].toUpperCase() : '';
+
+            // Try explicit YYYY-MM-DD or YYYY/MM/DD
+            let m = str.match(/^(\d{4})[-/\.](\d{1,2})[-/\.](\d{1,2})(?:[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+            if (m) {
+                let hour = parseInt(m[4]||0, 10);
+                if (ampmToken === ' PM' && hour < 12) hour += 12;
+                if (ampmToken === ' AM' && hour === 12) hour = 0;
+                let d = new Date(m[1], m[2]-1, m[3], hour, m[5]||0, m[6]||0);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            // Try DD/MM/YYYY or MM/DD/YYYY
+            m = str.match(/^(\d{1,2})[-/\.](\d{1,2})[-/\.](\d{2,4})(?:[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+            if (m) {
+                let p1 = parseInt(m[1], 10);
+                let p2 = parseInt(m[2], 10);
+                let y = parseInt(m[3], 10);
+                if (y < 100) y += (y < 50 ? 2000 : 1900);
+                
+                let hour = parseInt(m[4]||0, 10);
+                if (ampmToken === ' PM' && hour < 12) hour += 12;
+                if (ampmToken === ' AM' && hour === 12) hour = 0;
+
+                let d;
+                if (p1 > 12) {
+                    d = new Date(y, p2 - 1, p1, hour, m[5]||0, m[6]||0);
+                } else {
+                    d = new Date(y, p1 - 1, p2, hour, m[5]||0, m[6]||0);
+                }
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            return null;
+        }
+
+        // ==================== CSV PARSING ENGINE ====================
+        function parseCSVText(text) {
+            if (!text) return [];
+            const lines = text.split(/\r?\n/);
+            const dataMatrix = [];
+
+            let separator = ',';
+            if (lines.length > 0) {
+                const sampleLine = lines[0];
+                const commas = (sampleLine.match(/,/g) || []).length;
+                const semicolons = (sampleLine.match(/;/g) || []).length;
+                const tabs = (sampleLine.match(/\t/g) || []).length;
+                
+                if (semicolons > commas && semicolons > tabs) {
+                    separator = ';';
+                } else if (tabs > commas && tabs > semicolons) {
+                    separator = '\t';
+                }
+            }
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const row = [];
+                let insideQuote = false;
+                let currentField = '';
+
+                for (let j = 0; j < line.length; j++) {
+                    const char = charAt(line, j);
+                    if (char === '"' || char === "'") {
+                        insideQuote = !insideQuote;
+                    } else if (char === separator && !insideQuote) {
+                        row.push(currentField.trim());
+                        currentField = '';
+                    } else {
+                        currentField += char;
+                    }
+                }
+                row.push(currentField.trim());
+                dataMatrix.push(row);
+            }
+            return dataMatrix;
+        }
+
+        function charAt(str, idx) {
+            return idx < str.length ? str[idx] : '';
+        }
+
+        // ==================== FILE HANDLING & DECODING ====================
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-brand-500', 'bg-brand-50/20');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-brand-500', 'bg-brand-50/20');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-brand-500', 'bg-brand-50/20');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileUpload({ target: { files } });
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileUpload);
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('genDate').innerText = `Data updated: ${new Date().toLocaleTimeString()}`;
+            document.getElementById('genDate').classList.remove('hidden');
+            
+            const fileName = file.name.toLowerCase();
+            const reader = new FileReader();
+
+            if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const parsedData = parseCSVText(text);
+                        parseAndInjectMatrix(parsedData, 'Plain-Text CSV');
+                    } catch (error) {
+                        showAlert('CSV Extraction Error', 'Failed parsing CSV elements: ' + error.message, 'danger');
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        parseAndInjectMatrix(jsonData, 'Excel Workbook');
+                    } catch (error) {
+                        showAlert('Workbook Read Error', 'Error reading Excel workbook: ' + error.message, 'danger');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function parseAndInjectMatrix(data, formatSource) {
+            let startRow = 0;
+            let isFahrenheitDetected = false;
+            
+            if (data.length === 0) {
+                showAlert('Empty Dataset', 'The uploaded file does not contain any readable row matrix fields.', 'warning');
+                return;
+            }
+
+            const firstRowStr = JSON.stringify(data[0]).toLowerCase();
+            if (firstRowStr.includes('fahrenheit') || firstRowStr.includes('°f') || firstRowStr.includes(' (f)')) {
+                isFahrenheitDetected = true;
+            }
+            if (typeof data[0][0] === 'string' && isNaN(parseFloat(data[0][1]))) {
+                startRow = 1;
+            }
+            
+            // Dynamically detect column layout
+            let colCount = 0;
+            for (let i = startRow; i < Math.min(startRow + 5, data.length); i++) {
+                if (data[i] && data[i].length > colCount) {
+                    colCount = data[i].length;
+                }
+            }
+            const hasTimeColumn = colCount >= 3;
+            
+            tData = [];
+            rhData = [];
+            timeData = [];
+            let unparsedTemps = [];
+            
+            for (let i = startRow; i < data.length; i++) {
+                const row = data[i];
+                if (!row || row.length < 2) continue;
+                
+                let dateVal = null;
+                let rawT = null;
+                let rawRH = null;
+                
+                if (hasTimeColumn) {
+                    dateVal = row[0];
+                    rawT = row[1];
+                    rawRH = row[2] !== undefined ? row[2] : row[1];
+                } else {
+                    dateVal = null;
+                    rawT = row[0];
+                    rawRH = row[1];
+                }
+                
+                const tVal = parseRobustFloat(rawT);
+                const rhVal = parseRobustFloat(rawRH);
+                const normalizedDate = hasTimeColumn ? parseRobustDate(dateVal) : null;
+                
+                if (normalizedDate) {
+                    timeData.push(normalizedDate.toISOString());
+                    unparsedTemps.push(isNaN(tVal) ? null : tVal);
+                    rhData.push(isNaN(rhVal) ? null : rhVal);
+                } else if (!isNaN(tVal) || !isNaN(rhVal)) {
+                    timeData.push(null);
+                    unparsedTemps.push(isNaN(tVal) ? null : tVal);
+                    rhData.push(isNaN(rhVal) ? null : rhVal);
+                }
+            }
+            
+            const validTCount = unparsedTemps.filter(v => v !== null).length;
+            const validRhCount = rhData.filter(v => v !== null).length;
+
+            if (validTCount === 0 || validRhCount === 0) {
+                showAlert('Format Structure Issue', `Could not parse data rows. Please ensure columns match: \n• Col 1: Date/Time \n• Col 2: Temperature \n• Col 3: Humidity\n\nOr if no dates:\n• Col 1: Temperature \n• Col 2: Humidity`, 'warning');
+                return;
+            }
+
+            if (!isFahrenheitDetected && validTCount > 0) {
+                const validTemps = unparsedTemps.filter(v => v !== null);
+                const sampleSubset = validTemps.slice(0, 50);
+                if(sampleSubset.length > 0) {
+                    const avgSample = sampleSubset.reduce((sum, v) => sum + v, 0) / sampleSubset.length;
+                    if (avgSample > 45) {
+                        isFahrenheitDetected = true;
+                    }
+                }
+            }
+
+            if (isFahrenheitDetected) {
+                tData = unparsedTemps.map(fVal => fVal !== null ? (fVal - 32) * 5 / 9 : null);
+            } else {
+                tData = unparsedTemps;
+            }
+            
+			const validDates = timeData.filter(d => d !== null);
+            const formFields = document.getElementById('calibrationFormFields');
+            const overrideToggle = document.getElementById('manualOverrideToggle');
+
+            if (validDates.length > 0) {
+                fileHasNativeDates = true;
+                document.getElementById('firstDate').value = new Date(validDates[0]).toISOString().slice(0, 16);
+                
+                // Keep panel interactive, but unchecked by default since native dates exist
+                overrideToggle.checked = false;
+                formFields.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                fileHasNativeDates = false;
+                document.getElementById('firstDate').value = ""; 
+                
+                // Force open because there are no native timestamps available
+                overrideToggle.checked = true;
+                formFields.classList.remove('opacity-50', 'pointer-events-none');
+            }
+
+            let alertMsg = `Successfully parsed ${tData.length} records using our ${formatSource} processor.`;
+            if (fileHasNativeDates) {
+                alertMsg += ` Native timestamps detected. If they look incorrect, flip the 'Override' toggle in the calibration box to rebuild the timeline manually.`;
+            } else {
+                alertMsg += ` No native timestamps found. Manual timeline creation has been unlocked.`;
+            }
+            
+            if (isFahrenheitDetected) {
+                alertMsg += ` Fahrenheit readings were automatically detected and converted to Celsius (°C).`;
+                showAlert('Scale Auto-Calibrated', alertMsg, 'warning');
+            } else {
+                showAlert('Data Decoded Successfully', alertMsg, 'success');
+            }
+
+            // Immediately trigger plots so the user has visual feedback right away 
+            if (tData.length > 0) {
+                generatePlots(false);
+            }
+        }
+		
+			// New interactive toggle routine allowing custom manual overrides anytime
+        function toggleManualOverride(isOverrideActive) {
+            const formFields = document.getElementById('calibrationFormFields');
+            if (isOverrideActive) {
+                formFields.classList.remove('opacity-50', 'pointer-events-none');
+                if(!document.getElementById('firstDate').value) {
+                    // Seed with current moment if empty
+                    document.getElementById('firstDate').value = new Date().toISOString().slice(0, 16);
+                }
+            } else {
+                if (fileHasNativeDates) {
+                    formFields.classList.add('opacity-50', 'pointer-events-none');
+                }
+            }
+        }
+
+        function getFrequencyHours() {
+            const freq = document.getElementById('frequency').value;
+            switch(freq) {
+                case 'hourly': return 1;
+                case '30min': return 0.5;
+                case '15min': return 0.25;
+                case '5min': return 5/60;
+                case 'daily': return 24;
+                default: return 1;
+            }
+        }
+
+        // ==================== GITHUB INITIAL AUTO-LOADER ====================
+        async function loadFromGitHub(fileUrl) {
+            try {
+                const response = await fetch(fileUrl);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array', cellDates: true });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                parseAndInjectMatrix(jsonData, 'GitHub Demo Excel file');
+            } catch (error) {
+                console.warn('Silent fallback: load from GitHub failed. Ready for manual upload.', error);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            const githubFileUrl = 'https://raw.githubusercontent.com/jgraubove/jgraubove.github.io/refs/heads/master/example_interior.xlsx';
+            loadFromGitHub(githubFileUrl);
+        });
+
+        // ==================== PSYCHROMETRIC FORMULA CALCULATIONS ====================
+        function calcW(T, RH_percent) {
+            const pressure = 101325; 
+            const RH = RH_percent / 100;
+            const exponent = (17.27 * T) / (T + 237.3);
+            const e_s = 610.78 * Math.exp(exponent);
+            const e_a = RH * e_s;
+            
+            let W = 0;
+            if ((pressure - e_a) > 0) {
+                W = 0.62198 * (e_a / (pressure - e_a));
+            }
+            return W * 1000; // Returns g/kg dry air
+        }
+
+        function calculatePsychrometricData() {
+            const wData = [];
+            for (let i = 0; i < tData.length; i++) {
+                if (tData[i] !== null && rhData[i] !== null) {
+                    wData.push(calcW(tData[i], rhData[i]));
+                } else {
+                    wData.push(null);
+                }
+            }
+            return { tData, rhData, wData };
+        }
+
+        // ==================== SCIENTIFIC MATRIX MATH & ROBUST STATS ====================
+        function calculatePercentile(arr, p) {
+            if (arr.length === 0) return 0;
+            if (p <= 0) return arr[0];
+            if (p >= 100) return arr[arr.length - 1];
+            const index = (arr.length - 1) * (p / 100);
+            const lower = Math.floor(index);
+            const upper = Math.ceil(index);
+            const weight = index - lower;
+            return arr[lower] * (1 - weight) + arr[upper] * weight;
+        }
+
+        function calculatePearsonCorrelation(x, y) {
+            const n = x.length;
+            if (n === 0) return 0;
+            const meanX = x.reduce((a, b) => a + b, 0) / n;
+            const meanY = y.reduce((a, b) => a + b, 0) / n;
+            let num = 0;
+            let denX = 0;
+            let denY = 0;
+            for (let i = 0; i < n; i++) {
+                const diffX = x[i] - meanX;
+                const diffY = y[i] - meanY;
+                num += diffX * diffY;
+                denX += diffX * diffX;
+                denY += diffY * diffY;
+            }
+            if (denX === 0 || denY === 0) return 0;
+            return num / Math.sqrt(denX * denY);
+        }
+
+        function calculateStats() {
+            const validT = tData.filter(v => v !== null);
+            const validRh = rhData.filter(v => v !== null);
+            
+            const n = validT.length; 
+            if(n === 0) return;
+
+            const sumT = validT.reduce((a,b) => a+b, 0);
+            const sumRh = validRh.reduce((a,b) => a+b, 0);
+            const meanT = sumT / n;
+            const meanRh = sumRh / validRh.length;
+            
+            const sortedT = [...validT].sort((a,b) => a-b);
+            const sortedRh = [...validRh].sort((a,b) => a-b);
+            
+            let pairedT = [];
+            let pairedRh = [];
+            for (let i = 0; i < tData.length; i++) {
+                if (tData[i] !== null && rhData[i] !== null) {
+                    pairedT.push(tData[i]);
+                    pairedRh.push(rhData[i]);
+                }
+            }
+
+            statSummary = {
+                n: n,
+                tMin: Math.min(...validT),
+                tMax: Math.max(...validT),
+                tMean: meanT,
+                tStd: calculateStd(validT, meanT),
+                
+                rhMin: Math.min(...validRh),
+                rhMax: Math.max(...validRh),
+                rhMean: meanRh,
+                rhStd: calculateStd(validRh, meanRh),
+                
+                tP5: calculatePercentile(sortedT, 5),
+                tQ1: calculatePercentile(sortedT, 25),
+                tMedian: calculatePercentile(sortedT, 50),
+                tQ3: calculatePercentile(sortedT, 75),
+                tP95: calculatePercentile(sortedT, 95),
+                
+                rhP5: calculatePercentile(sortedRh, 5),
+                rhQ1: calculatePercentile(sortedRh, 25),
+                rhMedian: calculatePercentile(sortedRh, 50),
+                rhQ3: calculatePercentile(sortedRh, 75),
+                rhP95: calculatePercentile(sortedRh, 95),
+                
+                correlation: calculatePearsonCorrelation(pairedT, pairedRh)
+            };
+
+            if (limitsEnabled) {
+                let tOutCount = 0;
+                let rhOutCount = 0;
+                let totalOutCount = 0;
+                let validPairsCount = 0;
+                
+                for (let i = 0; i < tData.length; i++) {
+                    const tVal = tData[i];
+                    const rhVal = rhData[i];
+                    
+                    if (tVal === null || rhVal === null) continue;
+                    validPairsCount++;
+
+                    let tOut = (tVal < limitTMin || tVal > limitTMax);
+                    let rhOut = (rhVal < limitRHMin || rhVal > limitRHMax);
+                    
+                    if (tOut) tOutCount++;
+                    if (rhOut) rhOutCount++;
+                    if (tOut || rhOut) totalOutCount++;
+                }
+                
+                if (validPairsCount > 0) {
+                    statSummary.compliance = {
+                        tOut: tOutCount,
+                        tOutPct: (tOutCount / validPairsCount) * 100,
+                        tInPct: ((validPairsCount - tOutCount) / validPairsCount) * 100,
+                        
+                        rhOut: rhOutCount,
+                        rhOutPct: (rhOutCount / validPairsCount) * 100,
+                        rhInPct: ((validPairsCount - rhOutCount) / validPairsCount) * 100,
+                        
+                        totalOut: totalOutCount,
+                        totalInPct: ((validPairsCount - totalOutCount) / validPairsCount) * 100
+                    };
+                }
+            }
+
+            document.getElementById('stat-count').innerText = statSummary.n.toLocaleString();
+            document.getElementById('stat-avg-temp').innerText = `${statSummary.tMean.toFixed(1)} °C`;
+            document.getElementById('stat-avg-rh').innerText = `${statSummary.rhMean.toFixed(1)} %`;
+        }
+
+        function calculateStd(data, mean) {
+            const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
+            return Math.sqrt(variance);
+        }
+
+        // ==================== RENDERING COMPONENT PLOTS ====================
+		function generatePlots(isFastReplot = false) {
+            const firstDateStr = document.getElementById('firstDate').value;
+            const overrideActive = document.getElementById('manualOverrideToggle').checked;
+            const hasManualTime = firstDateStr !== '' && firstDateStr !== null;
+            const freqHours = getFrequencyHours();
+            
+            // Rebuild the timeline explicitly if dates are missing OR user explicitly checked override
+            if (!fileHasNativeDates || overrideActive) {
+                if (hasManualTime) {
+                    const start = new Date(firstDateStr);
+                    if (!isNaN(start.getTime())) {
+                        timeData = [];
+                        for (let i = 0; i < tData.length; i++) {
+                            const ts = new Date(start.getTime() + (i * freqHours * 60 * 60 * 1000));
+                            timeData.push(ts.toISOString());
+                        }
+                    } else {
+                        timeData = new Array(tData.length).fill(null);
+                        showAlert('Timeline Configuration Error', 'The selected date format could not be processed.', 'warning');
+                    }
+                } else {
+                    timeData = new Array(tData.length).fill(null);
+                }
+            }
+            
+            calculateStats();
+            const psychData = calculatePsychrometricData();
+
+            document.getElementById('resultsSection').classList.remove('hidden');
+            
+            createTimeseriesPlot();
+            createScatterPlot();
+            createPsychrometricPlot(psychData);
+            createDistributionPlot(tData, 'Temperature');
+            createDistributionPlot(rhData, 'Relative Humidity');
+            createPeriodPlot();
+            createCorrelationHeatmap();
+            renderSummaryTable();
+
+            // Handle Plotly's rendering quirks on first load
+            if (!isFastReplot) {
+                const activeTabButton = document.querySelector('#plotTabs button.text-brand-700');
+                if (activeTabButton) {
+                    switchTab(activeTabButton.id.replace('btn-tab-', ''));
+                } else {
+                    switchTab('time');
+                }
+            }
+        }
+
+ function createTimeseriesPlot() {
+            const hasTime = timeData.some(d => d !== null);
+            const xLabel = hasTime ? 'Environmental Log Timeline' : 'Sequential Sample Index';
+            
+            // Subsample only if the dataset exceeds 2 full years of hourly records (17,520 points)
+            const twoYearsPoints = 2 * 365 * 24; 
+            const subsetSize = tData.length > twoYearsPoints ? twoYearsPoints : tData.length;
+            
+            const indices = tData.length > subsetSize 
+                ? Array.from({length: subsetSize}, (_, i) => Math.floor(i * tData.length / subsetSize)) 
+                : Array.from({length: tData.length}, (_, i) => i);
+            
+            let xSub = [];
+            let tSub = [];
+            let rhSub = [];
+
+            if (hasTime) {
+                let diffs = [];
+                let limit = Math.min(timeData.length, 200);
+                for (let i = 1; i < limit; i++) {
+                    if (timeData[i] && timeData[i-1]) {
+                        let d = new Date(timeData[i]).getTime() - new Date(timeData[i-1]).getTime();
+                        if (d > 0) diffs.push(d);
+                    }
+                }
+                let actualIntervalMs = 0;
+                if (diffs.length > 0) {
+                    diffs.sort((a,b) => a-b);
+                    actualIntervalMs = diffs[Math.floor(diffs.length / 2)];
+                }
+                if (!actualIntervalMs || actualIntervalMs < 60000) {
+                    actualIntervalMs = getFrequencyHours() * 3600000;
+                }
+
+                let prevIdx = -1;
+                
+                for (let i = 0; i < indices.length; i++) {
+                    const idx = indices[i];
+                    
+                    if (prevIdx !== -1 && timeData[idx] && timeData[prevIdx]) {
+                        const diff = new Date(timeData[idx]).getTime() - new Date(timeData[prevIdx]).getTime();
+                        const expectedDiff = actualIntervalMs * (idx - prevIdx);
+                        
+                        if (diff > expectedDiff + (actualIntervalMs * 0.5)) {
+                            const gapDate = new Date(new Date(timeData[prevIdx]).getTime() + actualIntervalMs);
+                            xSub.push(gapDate.toISOString());
+                            tSub.push(null);
+                            rhSub.push(null);
+                        }
+                    }
+                    
+                    xSub.push(timeData[idx] ? new Date(timeData[idx]).toISOString() : (idx+1).toString());
+                    tSub.push(tData[idx]);
+                    rhSub.push(rhData[idx]);
+                    prevIdx = idx;
+                }
+            } else {
+                xSub = indices.map(i => (i+1).toString());
+                tSub = indices.map(i => tData[i]);
+                rhSub = indices.map(i => rhData[i]);
+            }
+            
+            const trace1 = {
+                x: xSub,
+                y: tSub,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Temp (°C)',
+                line: { color: '#ef4444', width: 1.5 },
+                connectgaps: false,
+                yaxis: 'y'
+            };
+            
+            const trace2 = {
+                x: xSub,
+                y: rhSub,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Humidity (%)',
+                line: { color: '#3b82f6', width: 1.5 },
+                connectgaps: false,
+                yaxis: 'y2'
+            };
+            
+            const shapes = [];
+            if (limitsEnabled) {
+                shapes.push(
+                    { type: 'line', yref: 'y', xref: 'paper', x0: 0, x1: 1, y0: limitTMin, y1: limitTMin, line: { color: 'rgba(239, 68, 68, 0.45)', width: 2, dash: 'dash' } },
+                    { type: 'line', yref: 'y', xref: 'paper', x0: 0, x1: 1, y0: limitTMax, y1: limitTMax, line: { color: 'rgba(239, 68, 68, 0.45)', width: 2, dash: 'dash' } },
+                    { type: 'line', yref: 'y2', xref: 'paper', x0: 0, x1: 1, y0: limitRHMin, y1: limitRHMin, line: { color: 'rgba(59, 130, 246, 0.45)', width: 2, dash: 'dash' } },
+                    { type: 'line', yref: 'y2', xref: 'paper', x0: 0, x1: 1, y0: limitRHMax, y1: limitRHMax, line: { color: 'rgba(59, 130, 246, 0.45)', width: 2, dash: 'dash' } }
+                );
+            }
+            
+            const layout = {
+                title: { text: 'Plot 1: Climatic Parameters Log over Time', font: { size: 14, color: '#0f172a', weight: 'bold' } },
+                xaxis: { 
+                    title: { text: xLabel, standoff: 25 }, 
+                    gridcolor: '#f1f5f9',
+                    tickangle: -30,
+                    nticks: 10,
+                    automargin: true 
+                },
+                yaxis: { title: 'Temperature (°C)', side: 'left', gridcolor: '#f1f5f9', titlefont: {color: '#ef4444'}, tickfont: {color: '#ef4444'} },
+                yaxis2: { title: 'Relative Humidity (%RH)', side: 'right', overlaying: 'y', gridcolor: '#f1f5f9', titlefont: {color: '#3b82f6'}, tickfont: {color: '#3b82f6'} },
+                legend: { x: 0.01, y: 1.12, orientation: 'h', bgcolor: 'rgba(255,255,255,0.8)' },
+                hovermode: 'x unified',
+                shapes: shapes,
+                margin: { t: 80, b: 80, l: 60, r: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+            
+            Plotly.newPlot('plot-time', [trace1, trace2], layout, {responsive: true});
+        }
+
+        function createScatterPlot() {
+            const subsetSize = tData.length > 17000 ? 17000 : tData.length;
+            const indices = tData.length > subsetSize 
+                ? Array.from({length: subsetSize}, (_, i) => Math.floor(i * tData.length / subsetSize)) 
+                : Array.from({length: tData.length}, (_, i) => i);
+            
+            const tSub = indices.map(i => tData[i]);
+            const rhSub = indices.map(i => rhData[i]);
+            
+            const trace = {
+                x: tSub,
+                y: rhSub,
+                mode: 'markers',
+                type: 'scatter',
+                marker: { color: '#0284c7', size: 6, opacity: 0.6 },
+                hovertemplate: 'T: %{x:.2f}°C<br>RH: %{y:.2f}%<extra></extra>',
+                name: 'Data Point'
+            };
+            
+            const shapes = [];
+            if (limitsEnabled) {
+                shapes.push({
+                    type: 'rect',
+                    xref: 'x',
+                    yref: 'y',
+                    x0: limitTMin,
+                    x1: limitTMax,
+                    y0: limitRHMin,
+                    y1: limitRHMax,
+                    fillcolor: 'rgba(2, 132, 199, 0.05)',
+                    line: { color: '#0284c7', width: 2, dash: 'dash' }
+                });
+            }
+            
+            const layout = {
+                title: { text: 'Plot 2: Dry-Bulb Temperature vs Relative Humidity Space', font: { size: 14, color: '#0f172a', weight: 'bold' } },
+                xaxis: { title: 'Dry Bulb Temp (°C)', gridcolor: '#f1f5f9' },
+                yaxis: { title: 'Relative Humidity (%RH)', gridcolor: '#f1f5f9' },
+                shapes: shapes,
+                margin: { t: 50, b: 50, l: 60, r: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+            
+            Plotly.newPlot('plot-scatter', [trace], layout, {responsive: true});
+        }
+
+        function createPsychrometricPlot(psychData) {
+            const { tData, wData, rhData } = psychData;
+            const validT = tData.filter(v => v !== null);
+            if(validT.length === 0) return;
+
+            const pressure = 101325; 
+            const minTemp = Math.floor(Math.min(...validT, limitsEnabled ? limitTMin : 15)) - 2;
+            const maxTemp = Math.ceil(Math.max(...validT, limitsEnabled ? limitTMax : 25)) + 2;
+            const step = 0.5;
+            const traces = [];
+            const annotations = [];
+
+            // Background relative humidity curves
+            for (let rhPercent = 10; rhPercent <= 100; rhPercent += 10) {
+                const lineX = [];
+                const lineY = [];
+
+                for (let T = minTemp; T <= maxTemp; T += step) {
+                    lineX.push(T);
+                    lineY.push(calcW(T, rhPercent));
+                }
+
+                const isSaturation = rhPercent === 100;
+                traces.push({
+                    x: lineX,
+                    y: lineY,
+                    mode: 'lines',
+                    name: `${rhPercent}% RH`,
+                    line: {
+                        color: isSaturation ? '#ef4444' : 'rgba(148, 163, 184, 0.3)',
+                        width: isSaturation ? 2 : 1,
+                        dash: isSaturation ? 'dash' : 'solid'
+                    },
+                    hoverinfo: 'none',
+                    showlegend: false
+                });
+
+                const labelX = maxTemp;
+                let labelY = calcW(labelX, rhPercent);
+
+                annotations.push({
+                    x: labelX,
+                    y: labelY,
+                    xref: 'x',
+                    yref: 'y',
+                    xshift: 10,
+                    text: `${rhPercent}%`,
+                    showarrow: false,
+                    xanchor: 'left',
+                    yanchor: 'middle',
+                    font: { size: 9, color: isSaturation ? '#ef4444' : '#64748b' }
+                });
+            }
+
+            // Safe Zone Polygon
+            if (limitsEnabled) {
+                const boundaryX = [];
+                const boundaryY = [];
+                const resSteps = 20;
+                
+                for (let j = 0; j <= resSteps; j++) {
+                    const rhVal = limitRHMin + (limitRHMax - limitRHMin) * (j / resSteps);
+                    boundaryX.push(limitTMin);
+                    boundaryY.push(calcW(limitTMin, rhVal));
+                }
+                for (let j = 0; j <= resSteps; j++) {
+                    const tVal = limitTMin + (limitTMax - limitTMin) * (j / resSteps);
+                    boundaryX.push(tVal);
+                    boundaryY.push(calcW(tVal, limitRHMax));
+                }
+                for (let j = 0; j <= resSteps; j++) {
+                    const rhVal = limitRHMax - (limitRHMax - limitRHMin) * (j / resSteps);
+                    boundaryX.push(limitTMax);
+                    boundaryY.push(calcW(limitTMax, rhVal));
+                }
+                for (let j = 0; j <= resSteps; j++) {
+                    const tVal = limitTMax - (limitTMax - limitTMin) * (j / resSteps);
+                    boundaryX.push(tVal);
+                    boundaryY.push(calcW(tVal, limitRHMin));
+                }
+
+                traces.push({
+                    x: boundaryX,
+                    y: boundaryY,
+                    mode: 'lines',
+                    fill: 'toself',
+                    fillcolor: 'rgba(2, 132, 199, 0.08)',
+                    line: { color: '#0284c7', width: 2, dash: 'dash' },
+                    name: 'Limits Zone',
+                    showlegend: true
+                });
+            }
+
+            // Scatter values on top
+            traces.push({
+                x: tData,
+                y: wData,
+                mode: 'markers',
+                name: 'Measurements',
+                marker: { color: '#0369a1', size: 6, opacity: 0.8 },
+                customdata: rhData,
+                hovertemplate: 'Dry Bulb Temp: %{x:.1f}°C<br>Humidity Ratio: %{y:.2f} g/kg<br>RH: %{customdata:.1f}%<extra></extra>',
+                showlegend: true
+            });
+
+            const layout = {
+                title: { text: 'Plot 3: Psychrometric Space Map', font: { size: 14, color: '#0f172a', weight: 'bold' } },
+                xaxis: { title: 'Dry Bulb Temperature (°C)', range: [minTemp, maxTemp + 1], gridcolor: '#f1f5f9' },
+                yaxis: { title: 'Humidity Ratio (g/kg dry air)', gridcolor: '#f1f5f9' },
+                annotations: annotations,
+                margin: { t: 50, b: 50, l: 60, r: 80 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                legend: { x: 0.01, y: 1.1, orientation: 'h', bgcolor: 'rgba(255,255,255,0.8)' }
+            };
+
+            Plotly.newPlot('plot-psychro', traces, layout, { responsive: true });
+        }
+
+        function createDistributionPlot(data, label) {
+            const validData = data.filter(v => v !== null);
+            if(validData.length === 0) return;
+
+            const bins = Math.min(30, Math.floor(Math.sqrt(validData.length)));
+            const isTemp = label.includes('Temperature');
+            const trace = {
+                x: validData,
+                type: 'histogram',
+                nbinsx: bins,
+                marker: { color: isTemp ? '#f43f5e' : '#3b82f6', opacity: 0.7 },
+                name: label
+            };
+            
+            // Climatic Limits overlay vertical markers
+            const shapes = [];
+            if (limitsEnabled) {
+                if (isTemp) {
+                    shapes.push(
+                        { type: 'line', xref: 'x', yref: 'paper', x0: limitTMin, x1: limitTMin, y0: 0, y1: 1, line: { color: '#ef4444', width: 2, dash: 'dash' } },
+                        { type: 'line', xref: 'x', yref: 'paper', x0: limitTMax, x1: limitTMax, y0: 0, y1: 1, line: { color: '#ef4444', width: 2, dash: 'dash' } }
+                    );
+                } else {
+                    shapes.push(
+                        { type: 'line', xref: 'x', yref: 'paper', x0: limitRHMin, x1: limitRHMin, y0: 0, y1: 1, line: { color: '#3b82f6', width: 2, dash: 'dash' } },
+                        { type: 'line', xref: 'x', yref: 'paper', x0: limitRHMax, x1: limitRHMax, y0: 0, y1: 1, line: { color: '#3b82f6', width: 2, dash: 'dash' } }
+                    );
+                }
+            }
+            
+            const layout = {
+                title: { text: `Plot 4: ${label} Probability Spread`, font: { size: 12, color: '#475569', weight: 'bold' } },
+                xaxis: { title: `${label} Level`, gridcolor: '#f1f5f9' },
+                yaxis: { title: 'Frequency', gridcolor: '#f1f5f9' },
+                shapes: shapes,
+                margin: { t: 40, b: 40, l: 45, r: 20 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+            
+            Plotly.newPlot(isTemp ? 'plot-tempdist' : 'plot-rhdist', [trace], layout, {responsive: true});
+        }
+
+        function createPeriodPlot() {
+            const hasTime = timeData.some(d => d !== null);
+            if (!hasTime || tData.length === 0) {
+                Plotly.newPlot('plot-period', [], {
+                    title: { text: 'Plot 5: Period Analysis (Requires Configured Timeline)', font: { size: 14, color: '#0f172a', weight: 'bold' } },
+                    xaxis: { visible: false },
+                    yaxis: { visible: false },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)'
+                }, {responsive: true});
+                return;
+            }
+
+            const groupType = document.getElementById('periodGroup').value;
+            const metric = document.getElementById('periodMetric').value;
+            const freqHours = getFrequencyHours();
+            const groups = {};
+
+            for (let i = 0; i < tData.length; i++) {
+                if (!timeData[i]) continue;
+                const d = new Date(timeData[i]);
+                if (isNaN(d.getTime())) continue;
+
+                let key = '';
+                if (groupType === 'month') {
+                    key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                } else {
+                    key = getWeekString(d);
+                }
+
+                if (!groups[key]) {
+                    groups[key] = { t: [], rh: [], specDays: 0, count: 0 };
+                }
+                
+                if (tData[i] !== null) groups[key].t.push(tData[i]);
+                if (rhData[i] !== null) groups[key].rh.push(rhData[i]);
+                if (tData[i] !== null || rhData[i] !== null) groups[key].count++;
+
+                if (limitsEnabled && tData[i] !== null && rhData[i] !== null) {
+                    const inT = tData[i] >= limitTMin && tData[i] <= limitTMax;
+                    const inRH = rhData[i] >= limitRHMin && rhData[i] <= limitRHMax;
+                    if (inT && inRH) {
+                        groups[key].specDays += (freqHours / 24);
+                    }
+                }
+            }
+
+            const sortedKeys = Object.keys(groups).sort();
+            let trace = {};
+            let layout = {
+                title: { font: { size: 14, color: '#0f172a', weight: 'bold' } },
+                xaxis: { title: { text: groupType === 'month' ? 'Month' : 'Week', standoff: 20 }, gridcolor: '#f1f5f9', type: 'category', tickangle: -45, automargin: true },
+                yaxis: { gridcolor: '#f1f5f9' },
+                margin: { t: 50, b: 100, l: 60, r: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+
+            const isT = metric.includes('T');
+            const color = isT ? '#f43f5e' : '#3b82f6';
+            const ylabel = isT ? 'Temperature (°C)' : (metric === 'spec' ? 'Days' : 'Relative Humidity (%)');
+
+            if (metric.startsWith('box')) {
+                let xArr = [];
+                let yArr = [];
+                for (const key of sortedKeys) {
+                    const arr = isT ? groups[key].t : groups[key].rh;
+                    arr.forEach(v => { xArr.push(key); yArr.push(v); });
+                }
+                trace = {
+                    type: 'box',
+                    x: xArr,
+                    y: yArr,
+                    marker: { color: color },
+                    name: ylabel,
+                    boxpoints: 'outliers'
+                };
+                layout.yaxis.title = ylabel;
+                layout.title.text = `Plot 5: Boxplot of ${ylabel} by ${groupType === 'month' ? 'Month' : 'Week'}`;
+
+            } else if (metric.startsWith('iqr')) {
+                let xArr = [];
+                let yArr = [];
+                let baseArr = [];
+                for (const key of sortedKeys) {
+                    const arr = isT ? groups[key].t : groups[key].rh;
+                    if(arr.length === 0) continue;
+                    const sorted = [...arr].sort((a,b)=>a-b);
+                    const q1 = calculatePercentile(sorted, 25);
+                    const q3 = calculatePercentile(sorted, 75);
+                    xArr.push(key);
+                    baseArr.push(q1);
+                    yArr.push(q3 - q1);
+                }
+                trace = {
+                    type: 'bar',
+                    x: xArr,
+                    y: yArr,
+                    base: baseArr,
+                    marker: { color: color, opacity: 0.8 },
+                    name: `IQR ${ylabel}`,
+                    hovertemplate: '<b>%{x}</b><br>Q1: %{base:.2f}<br>Q3: %{customdata:.2f}<br>IQR: %{y:.2f}<extra></extra>',
+                    customdata: baseArr.map((b, i) => b + yArr[i])
+                };
+                layout.yaxis.title = ylabel;
+                layout.title.text = `Plot 5: Interquartile Range (IQR) of ${ylabel} by ${groupType === 'month' ? 'Month' : 'Week'}`;
+
+            } else if (metric.startsWith('med')) {
+                let xArr = [];
+                let yArr = [];
+                for (const key of sortedKeys) {
+                    const arr = isT ? groups[key].t : groups[key].rh;
+                    if(arr.length === 0) continue;
+                    const sorted = [...arr].sort((a,b)=>a-b);
+                    yArr.push(calculatePercentile(sorted, 50));
+                    xArr.push(key);
+                }
+                trace = {
+                    type: 'bar',
+                    x: xArr,
+                    y: yArr,
+                    marker: { color: color, opacity: 0.8 },
+                    name: `Median ${ylabel}`
+                };
+                layout.yaxis.title = ylabel;
+                layout.title.text = `Plot 5: Median ${ylabel} by ${groupType === 'month' ? 'Month' : 'Week'}`;
+
+            } else if (metric === 'spec') {
+                if (!limitsEnabled) {
+                    layout.title.text = `Plot 5: Days within Spec (Please Set Environmental Limits!)`;
+                    trace = { x: [], y: [], type: 'bar' };
+                } else {
+                    let xArr = [];
+                    let yArr = [];
+                    for (const key of sortedKeys) {
+                        xArr.push(key);
+                        yArr.push(groups[key].specDays);
+                    }
+                    trace = {
+                        type: 'bar',
+                        x: xArr,
+                        y: yArr,
+                        marker: { color: '#10b981', opacity: 0.8 },
+                        name: 'Days within Spec'
+                    };
+                    layout.yaxis.title = 'Days';
+                    layout.title.text = `Plot 5: Days within Spec by ${groupType === 'month' ? 'Month' : 'Week'}`;
+                }
+            }
+
+            Plotly.newPlot('plot-period', [trace], layout, {responsive: true});
+        }
+
+        function createCorrelationHeatmap() {
+            const validT = tData.filter(v => v !== null);
+            const validRh = rhData.filter(v => v !== null);
+            if(validT.length === 0 || validRh.length === 0) return;
+
+            const nBins = 15; 
+            const tMin = Math.min(...validT);
+            const tMax = Math.max(...validT);
+            const rhMin = Math.min(...validRh);
+            const rhMax = Math.max(...validRh);
+            
+            const z = Array.from({ length: nBins }, () => new Array(nBins).fill(0));
+            const datesMap = Array.from({ length: nBins }, () => new Array(nBins).fill(''));
+            
+            const tBinWidth = (tMax - tMin) / nBins || 1;
+            const rhBinWidth = (rhMax - rhMin) / nBins || 1;
+            
+            for (let i = 0; i < tData.length; i++) {
+                if (tData[i] === null || rhData[i] === null) continue;
+
+                let tIdx = Math.floor((tData[i] - tMin) / tBinWidth);
+                let rhIdx = Math.floor((rhData[i] - rhMin) / rhBinWidth);
+                
+                tIdx = Math.max(0, Math.min(tIdx, nBins - 1));
+                rhIdx = Math.max(0, Math.min(rhIdx, nBins - 1));
+                
+                z[rhIdx][tIdx]++;
+                const dateStr = timeData[i] ? new Date(timeData[i]).toLocaleDateString() : 'Raw Sample';
+                datesMap[rhIdx][tIdx] = dateStr; 
+            }
+            
+            // Continuous scale coordinate plotting allows exact limit shape overlays
+            const xVals = Array.from({length: nBins}, (_, i) => tMin + tBinWidth * (i + 0.5));
+            const yVals = Array.from({length: nBins}, (_, i) => rhMin + rhBinWidth * (i + 0.5));
+            
+            const trace = {
+                type: 'heatmap',
+                z: z,
+                x: xVals,
+                y: yVals,
+                customdata: datesMap,
+                colorscale: 'YlGnBu',
+                hovertemplate: '<b>Temp Center</b>: %{x:.2f}°C<br><b>RH Center</b>: %{y:.2f}%<br><b>Density Sum</b>: %{z}<extra></extra>'
+            };
+            
+            const shapes = [];
+            if (limitsEnabled) {
+                shapes.push({
+                    type: 'rect',
+                    xref: 'x',
+                    yref: 'y',
+                    x0: limitTMin,
+                    x1: limitTMax,
+                    y0: limitRHMin,
+                    y1: limitRHMax,
+                    fillcolor: 'rgba(0,0,0,0)',
+                    line: { color: '#0284c7', width: 2, dash: 'dash' }
+                });
+            }
+            
+            const layout = {
+                title: { text: 'Plot 6: Climatic Matrix State Density Map', font: { size: 14, color: '#0f172a', weight: 'bold' } },
+                xaxis: { title: 'Temperature Boundary Intervals (°C)', gridcolor: '#f1f5f9', ticksuffix: '°C' },
+                yaxis: { title: 'Relative Humidity Intervals (%)', autorange: 'reversed', gridcolor: '#f1f5f9', ticksuffix: '%' },
+                shapes: shapes,
+                margin: { t: 50, b: 50, l: 60, r: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+            
+            Plotly.newPlot('plot-heatmap', [trace], layout, {responsive: true});
+        }
+
+        function renderSummaryTable() {
+            const container = document.getElementById('summary-stats');
+            const complianceWidget = document.getElementById('summary-compliance-widget');
+            
+            // Reset Compliance widget
+            complianceWidget.innerHTML = '';
+            
+            if (limitsEnabled && statSummary.compliance) {
+                const cmp = statSummary.compliance;
+                const score = cmp.totalInPct;
+                
+                let scoreColorClass = "text-emerald-600 border-emerald-100 bg-emerald-50";
+                let textPhrase = "The microenvironment aligns comfortably within your target.";
+                
+                if (score < 80 && score >= 50) {
+                    scoreColorClass = "text-amber-600 border-amber-100 bg-amber-50";
+                    textPhrase = "Moderate compliance. ";
+                } else if (score < 50) {
+                    scoreColorClass = "text-rose-600 border-rose-100 bg-rose-50";
+                    textPhrase = "Substantial drift outside the guidelines.";
+                }
+                
+                complianceWidget.innerHTML = `
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                            
+                            <!-- Large Circular score container -->
+                            <div class="shrink-0 flex items-center gap-4">
+                                <div class="w-24 h-24 rounded-full border-4 flex flex-col items-center justify-center font-black ${scoreColorClass}">
+                                    <span class="text-2xl">${score.toFixed(1)}%</span>
+                                    <span class="text-[9px] uppercase font-bold tracking-wider">In Bounds</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-bold text-slate-900">Compliance with guidelines</h3>
+                                    <p class="text-xs text-slate-500 max-w-sm mt-0.5">${textPhrase}</p>
+                                    <div class="mt-2 text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Criteria Target: ${limitPreset.toUpperCase()} (${limitTMin}-${limitTMax}°C, ${limitRHMin}-${limitRHMax}% RH)</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Breakdown Progress Bars -->
+                            <div class="flex-1 w-full space-y-3.5">
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-rose-600 flex items-center gap-1"><i data-lucide="thermometer" class="w-3.5 h-3.5"></i> Temp Compliance</span>
+                                        <span class="text-slate-700">${cmp.tInPct.toFixed(1)}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                        <div class="bg-rose-500 h-2.5 rounded-full" style="width: ${cmp.tInPct}%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-blue-600 flex items-center gap-1"><i data-lucide="droplet" class="w-3.5 h-3.5"></i> Relative Humidity Compliance</span>
+                                        <span class="text-slate-700">${cmp.rhInPct.toFixed(1)}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                        <div class="bg-blue-500 h-2.5 rounded-full" style="width: ${cmp.rhInPct}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+
+            container.innerHTML = `
+                <!-- Table 1: Robust Non-Parametric Statistics -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">Recommended</span>
+                        <h3 class="text-sm font-bold text-slate-800">Robust Non-Parametric Statistics (Resilient to Sensor Spikes & Outliers)</h3>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <table class="min-w-full divide-y divide-slate-200 text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 font-bold">
+                                <tr>
+                                    <th class="px-6 py-3.5">Robust Stat (Percentiles)</th>
+                                    <th class="px-6 py-3.5">Temperature (°C)</th>
+                                    <th class="px-6 py-3.5">Relative Humidity (%)</th>
+                                    <th class="px-6 py-3.5">Interpretation Guidance for Conservators</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 bg-white">
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">Median (50th Percentile)</td>
+                                    <td class="px-6 py-3 text-brand-600 font-bold">${statSummary.tMedian ? statSummary.tMedian.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3 text-brand-600 font-bold">${statSummary.rhMedian ? statSummary.rhMedian.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">The true centre of the data. Half of all readings are below this, half above.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">Lower Quartile (25th Percentile)</td>
+                                    <td class="px-6 py-3">${statSummary.tQ1 ? statSummary.tQ1.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3">${statSummary.rhQ1 ? statSummary.rhQ1.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Defines the bottom edge of the measurements. 50% of the data is between Q1 and Q3.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">Upper Quartile (75th Percentile)</td>
+                                    <td class="px-6 py-3">${statSummary.tQ3 ? statSummary.tQ3.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3">${statSummary.rhQ3 ? statSummary.rhQ3.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Defines the top edge of the measurements. 50% of the data is between Q1 and Q3.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">5th Percentile</td>
+                                    <td class="px-6 py-3 text-amber-600 font-medium">${statSummary.tP5 ? statSummary.tP5.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3 text-amber-600 font-medium">${statSummary.rhP5 ? statSummary.rhP5.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Lower bound of the dataset spread ignoring the most extreme values. 95% of the data is between the 5th and 95th percentile.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">95th Percentile</td>
+                                    <td class="px-6 py-3 text-amber-600 font-medium">${statSummary.tP95 ? statSummary.tP95.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3 text-amber-600 font-medium">${statSummary.rhP95 ? statSummary.rhP95.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Upper bound of the dataset spread ignoring the most extreme values. 95% of the data is between the 5th and 95th percentile.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Table 2: Standard Parametric Statistics -->
+                <div class="space-y-3 pt-4">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 bg-rose-100 text-rose-800 text-xs font-bold rounded-full">Sensitive to Outliers</span>
+                        <h3 class="text-sm font-bold text-slate-800">Standard Parametric Statistics (Highly Influenced by Extremes)</h3>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <table class="min-w-full divide-y divide-slate-200 text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 font-bold">
+                                <tr>
+                                    <th class="px-6 py-3.5">Standard Parameter</th>
+                                    <th class="px-6 py-3.5">Temperature (°C)</th>
+                                    <th class="px-6 py-3.5">Relative Humidity (%)</th>
+                                    <th class="px-6 py-3.5">Drawback in Preventive Conservation</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 bg-white">
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">Arithmetic Mean (Average)</td>
+                                    <td class="px-6 py-3">${statSummary.tMean ? statSummary.tMean.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3">${statSummary.rhMean ? statSummary.rhMean.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Generally useful, but highly sensitive to brief spikes.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">Minimum Value (Absolute)</td>
+                                    <td class="px-6 py-3">${statSummary.tMin ? statSummary.tMin.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3">${statSummary.rhMin ? statSummary.rhMin.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Avoid using it. It is often skewed by a single sensor glitch.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">Maximum Value (Absolute)</td>
+                                    <td class="px-6 py-3">${statSummary.tMax ? statSummary.tMax.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3">${statSummary.rhMax ? statSummary.rhMax.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Avoid using it. It is often skewed by a single sensor glitch.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 font-semibold text-slate-900">Standard Deviation (σ)</td>
+                                    <td class="px-6 py-3">${statSummary.tStd ? statSummary.tStd.toFixed(2) : '-'} °C</td>
+                                    <td class="px-6 py-3">${statSummary.rhStd ? statSummary.rhStd.toFixed(2) : '-'} %</td>
+                                    <td class="px-6 py-3 text-slate-500">Assumes standard normal distribution curves, which real microclimates rarely match.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== EXPORT SYSTEM HELPER ROUTINES ====================
+        async function plotToCanvas(divId) {
+            const gd = document.getElementById(divId);
+            if (!gd) return null;
+            try {
+                return await Plotly.toImage(gd, { format: 'png', width: 900, height: 480 });
+            } catch (err) {
+                console.error("Failed to map Plotly element to Canvas image vector", err);
+                return null;
+            }
+        }
+
+        function addImageToPDF(doc, dataUrl, centerX, topY, width, height) {
+            if (!dataUrl) return;
+            const leftX = centerX - (width / 2);
+            doc.addImage(dataUrl, 'PNG', leftX, topY, width, height);
+        }
+
+        // ==================== COMPILING EXPORT PROFESSIONAL PDF ====================
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            
+            const oldBtn = document.getElementById('downloadBtn').innerText;
+            document.getElementById('downloadBtn').innerText = '⏳ Compiling...';
+            
+            try {
+                // ========== FRONT COVER PAGE ==========
+                doc.setFillColor(15, 23, 42); 
+                doc.rect(0, 0, 297, 210, 'F');
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(26);
+                doc.text('The 5 Preventive Conservation Plots', 148.5, 75, { align: 'center' });
+                doc.setFontSize(18);
+                doc.text('Environmental Analysis Report', 148.5, 88, { align: 'center' });
+                
+                doc.setDrawColor(2, 132, 199); 
+                doc.setLineWidth(1.5);
+                doc.line(40, 100, 257, 100);
+                
+                doc.setTextColor(148, 163, 184); 
+                doc.setFontSize(11);
+                doc.text('UCL Institute for Sustainable Heritage', 148.5, 112, { align: 'center' });
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(10);
+                doc.text(`Generated On:  ${new Date().toLocaleString()}`, 40, 140);
+                doc.text(`Total Log Points:  ${statSummary.n}`, 40, 148);
+                
+                const selectedFreq = document.getElementById('frequency').options[document.getElementById('frequency').selectedIndex].text;
+                doc.text(`Timeline Sampling Frequency:  ${selectedFreq}`, 40, 156);
+                
+                if (limitsEnabled) {
+                    doc.setTextColor(2, 132, 199);
+                    doc.text(`Active Limit Protocol:  ${limitPreset.toUpperCase()} Standards`, 40, 164);
+                    doc.text(`Environmental Limits: ${limitTMin}°C to ${limitTMax}°C  |  ${limitRHMin}% to ${limitRHMax}% RH`, 40, 172);
+                    
+                    if (statSummary.compliance) {
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFontSize(12);
+                        doc.text(`Overall Safeguard Compliance Index:  ${statSummary.compliance.totalInPct.toFixed(1)}%`, 40, 186);
+                    }
+                } else {
+                    doc.text(`Compliance Safeguard: Inactive`, 40, 164);
+                }
+
+                // ========== TABLE OF CONTENTS ==========
+                doc.addPage();
+                doc.setFillColor(248, 250, 252); 
+                doc.rect(0, 0, 297, 210, 'F');
+                
+                doc.setTextColor(15, 23, 42);
+                doc.setFontSize(16);
+                doc.text('Table of Contents', 25, 30);
+                
+                doc.setFontSize(11);
+                const tocItems = [
+                    ['1. Time Series Log', 'Page 3'],
+                    ['2. Scatter Plot', 'Page 4'],
+                    ['3. Psychrometric Chart', 'Page 5'],
+                    ['4. Temperature Distribution', 'Page 6'],
+                    ['5. Relative Humidity Distribution', 'Page 7'],
+                    ['6. Period Analysis', 'Page 8'],
+                    ['7. T & RH Density Heatmap', 'Page 9'],
+                    ['8. Statistical Metrics', 'Page 10']
+                ];
+                
+                tocItems.forEach((item, idx) => {
+                    const lineY = 50 + (idx * 15);
+                    doc.text(item[0], 25, lineY);
+                    doc.setDrawColor(226, 232, 240); 
+                    doc.setLineWidth(0.5);
+                    doc.line(25, lineY + 4, 272, lineY + 4);
+                    doc.text(item[1], 260, lineY, { align: 'right' });
+                });
+                
+                // ========== PAGE MODULES - PLOTS ITERATOR ==========
+                const periodGroup = document.getElementById('periodGroup').options[document.getElementById('periodGroup').selectedIndex].text;
+                const periodMetric = document.getElementById('periodMetric').options[document.getElementById('periodMetric').selectedIndex].text;
+
+                const pagesToRender = [
+                    { plotId: 'plot-time', title: '1. Time Series Log', desc: 'Plot 1: Evolution curves of temperature (red left scale) against humidity (blue right scale)' },
+                    { plotId: 'plot-scatter', title: '2. T and RH Scatterplot', desc: 'Plot 2: All datapoints of T vs. RH, showing the dispersion of the data.' },
+                    { plotId: 'plot-psychro', title: '3. Psychrometric Chart', desc: 'Plot 3: Climate data overlaid on a standard thermodynamic air chart at sea level (101.325 kPa), showing RH, absolute humidity and Dry Bulb Temperature.' },
+                    { plotId: 'plot-tempdist', title: '4. Temperature Distribution', desc: 'Plot 4a: Probability frequency distribution histogram showing the number of measurements of each value of T.' },
+                    { plotId: 'plot-rhdist', title: '5. RH Distribution ', desc: 'Plot 4b: Probability frequency distribution histogram showing the number of measurements of each value of RH.' },
+                    { plotId: 'plot-period', title: '6. Period Analysis', desc: `Plot 5: Bar/Boxplot showing ${periodMetric} grouped by ${periodGroup}.` },
+                    { plotId: 'plot-heatmap', title: '7. T and RH Heatmap', desc: 'Plot 6: Heatmap showing the most common combinations of T and RH' }
+                ];
+
+                for (let i = 0; i < pagesToRender.length; i++) {
+                    const page = pagesToRender[i];
+                    doc.addPage();
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(0, 0, 297, 210, 'F');
+                    
+                    doc.setTextColor(15, 23, 42);
+                    doc.setFontSize(14);
+                    doc.text(page.title, 20, 20);
+                    
+                    const canvasImg = await plotToCanvas(page.plotId);
+                    if (canvasImg) {
+                        addImageToPDF(doc, canvasImg, 148.5, 30, 240, 130);
+                    }
+                    
+                    doc.setTextColor(100, 116, 139);
+                    doc.setFontSize(9);
+                    doc.text(page.desc, 20, 185);
+                }
+
+                // ========== FINAL SUMMARY TABLE PAGE ==========
+                doc.addPage();
+                doc.setTextColor(15, 23, 42);
+                doc.setFontSize(14);
+                doc.text('8. Statistical Metrics & Educational Breakdown', 20, 20);
+                
+                // If limits enabled, add small compliance indicator on top of page 10
+                let nextStartY = 34;
+                if (limitsEnabled && statSummary.compliance) {
+                    const c = statSummary.compliance;
+                    doc.setFontSize(10);
+                    doc.setTextColor(2, 132, 199);
+                    doc.text(`Compliance Guard Active:  ${limitPreset.toUpperCase()} Protocol (${limitTMin}-${limitTMax}°C, ${limitRHMin}-${limitRHMax}% RH)`, 20, 28);
+                    doc.setTextColor(15, 23, 42);
+                    doc.text(`Overall Compliance Score: ${c.totalInPct.toFixed(1)}% | T Compliance: ${c.tInPct.toFixed(1)}% | RH Compliance: ${c.rhInPct.toFixed(1)}%`, 20, 33);
+                    nextStartY = 38;
+                }
+
+                // Section 1: Robust Table
+                doc.setFontSize(11);
+                doc.text('Robust Non-Parametric Statistics', 20, nextStartY);
+                doc.autoTable({
+                    startY: nextStartY + 4,
+                    head: [['Percentile Scalar', 'Temperature (°C)', 'Relative Humidity (%)', 'Preventive Conservation Purpose']],
+                    body: [
+                        ['Median (50th Percentile)', `${statSummary.tMedian ? statSummary.tMedian.toFixed(2) : '-'} °C`, `${statSummary.rhMedian ? statSummary.rhMedian.toFixed(2) : '-'} %`, 'The true centre of the data. Half of all readings are below this, half above.'],
+                        ['25th Percentile (Q1)', `${statSummary.tQ1 ? statSummary.tQ1.toFixed(2) : '-'} °C`, `${statSummary.rhQ1 ? statSummary.rhQ1.toFixed(2) : '-'} %`, 'Defines the bottom edge of the measurements. Useful to show the spread.'],
+                        ['75th Percentile (Q3)', `${statSummary.tQ3 ? statSummary.tQ3.toFixed(2) : '-'} °C`, `${statSummary.rhQ3 ? statSummary.rhQ3.toFixed(2) : '-'} %`, 'Defines the top edge of the measurements. Useful to show the spread.'],
+                        ['5th Percentile Floor', `${statSummary.tP5 ? statSummary.tP5.toFixed(2) : '-'} °C`, `${statSummary.rhP5 ? statSummary.rhP5.toFixed(2) : '-'} %`, 'Lower bound of the dataset spread ignoring the most extreme values.'],
+                        ['95th Percentile Ceiling', `${statSummary.tP95 ? statSummary.tP95.toFixed(2) : '-'} °C`, `${statSummary.rhP95 ? statSummary.rhP95.toFixed(2) : '-'} %`, 'Upper bound of the dataset spread ignoring the most extreme values.']
+                    ],
+                    theme: 'striped',
+                    headStyles: { fillColor: [2, 132, 199] }, 
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    styles: { fontSize: 8.5 }
+                });
+
+                // Section 2: Parametric Table
+                doc.setTextColor(15, 23, 42);
+                doc.setFontSize(11);
+                doc.text('Standard Parametric Statistics (Sensitive to Spikes)', 20, doc.lastAutoTable.finalY + 8);
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 12,
+                    head: [['Standard Parameter', 'Temperature (°C)', 'Relative Humidity (%)', 'Drawback in Conservation']],
+                    body: [
+                        ['Arithmetic Mean', `${statSummary.tMean ? statSummary.tMean.toFixed(2) : '-'} °C`, `${statSummary.rhMean ? statSummary.rhMean.toFixed(2) : '-'} %`, 'Generally useful, but highly sensitive to brief spikes.'],
+                        ['Minimum (Absolute)', `${statSummary.tMin ? statSummary.tMin.toFixed(2) : '-'} °C`, `${statSummary.rhMin ? statSummary.rhMin.toFixed(2) : '-'} %`, 'Avoid using it. It is often skewed by a single sensor glitch.'],
+                        ['Maximum (Absolute)', `${statSummary.tMax ? statSummary.tMax.toFixed(2) : '-'} °C`, `${statSummary.rhMax ? statSummary.rhMax.toFixed(2) : '-'} %`, 'Avoid using it. It is often skewed by a single sensor glitch.'],
+                        ['Standard Deviation', `${statSummary.tStd ? statSummary.tStd.toFixed(2) : '-'} °C`, `${statSummary.rhStd ? statSummary.rhStd.toFixed(2) : '-'} %`, 'Assumes standard normal distribution curves, which real microclimates rarely match.']
+                    ],
+                    theme: 'striped',
+                    headStyles: { fillColor: [225, 29, 72] }, 
+                    alternateRowStyles: { fillColor: [253, 244, 245] },
+                    styles: { fontSize: 8.5 }
+                });
+
+                doc.save('Preventive_Conservation_Climate_Report.pdf');
+                showAlert('Export Complete', 'Your multi-page preventive conservation report has been generated successfully.', 'success');
+            } catch (err) {
+                showAlert('PDF Compilation Error', 'An error occurred while compiling the PDF document: ' + err.message, 'danger');
+                console.error(err);
+            } finally {
+                document.getElementById('downloadBtn').innerText = oldBtn;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Dust Simulator</title>
+
+<style>
+
+:root{
+
+    --bg-color:#1a1a1a;
+
+    --panel-bg:rgba(30,30,30,0.95);
+
+    --text-color:#e0e0e0;
+
+    --accent-color:#4caf50;
+
+    --border-color:#444;
+}
+
+body{
+
+    margin:0;
+
+    overflow:hidden;
+
+    background:var(--bg-color);
+
+    color:var(--text-color);
+
+    font-family:Segoe UI, Arial, sans-serif;
+}
+
+#ui-panel{
+
+    position:absolute;
+
+    top:20px;
+
+    left:20px;
+
+    width:280px;
+
+    padding:24px;
+
+    background:var(--panel-bg);
+
+    border-radius:12px;
+
+    border:1px solid var(--border-color);
+
+    z-index:100;
+}
+
+h2{
+
+    margin:0 0 20px 0;
+
+    color:white;
+}
+
+#drop-zone{
+
+    border:2px dashed #555;
+
+    border-radius:8px;
+
+    padding:25px 15px;
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+    cursor:pointer;
+
+    transition:0.2s;
+}
+
+#drop-zone.drag-over{
+
+    border-color:var(--accent-color);
+
+    background:rgba(76,175,80,0.15);
+}
+
+.checkbox-wrapper{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin-bottom:20px;
+}
+
+.control-group{
+
+    margin-bottom:20px;
+}
+
+label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-size:0.9rem;
+}
+
+select{
+
+    width:100%;
+
+    padding:8px;
+
+    background:#2a2a2a;
+
+    color:#fff;
+
+    border:1px solid #444;
+
+    border-radius:4px;
+
+    margin-bottom:10px;
+}
+
+input[type="range"]{
+
+    width:100%;
+
+    margin-bottom:5px;
+}
+
+.value-display{
+
+    float:right;
+
+    color:var(--accent-color);
+
+    font-weight:bold;
+}
+
+small{
+
+    color:#888;
+}
+
+#status{
+
+    font-size:0.85rem;
+
+    color:#aaa;
+
+    border-top:1px solid #333;
+
+    padding-top:10px;
+}
+
+#deltaEPanel{
+
+    position:absolute;
+
+    right:20px;
+
+    bottom:20px;
+
+    width:340px;
+
+    background:rgba(30,30,30,0.95);
+
+    border:1px solid #444;
+
+    border-radius:12px;
+
+    padding:16px;
+
+    z-index:100;
+}
+
+#deltaEStats{
+
+    margin-bottom:10px;
+
+    font-size:14px;
+
+    color:#fff;
+}
+
+#histogramCanvas{
+
+    width:100%;
+
+    height:180px;
+
+    background:#181818;
+
+    border-radius:8px;
+}
+
+#infoPanel{
+
+    position:absolute;
+
+    right:20px;
+
+    top:20px;
+
+    width:340px;
+
+    background:rgba(30,30,30,0.95);
+
+    border:1px solid #444;
+
+    border-radius:12px;
+
+    padding:16px;
+
+    z-index:100;
+}
+
+/* NEW: Legend Panel Styles */
+#legendPanel {
+    position: absolute;
+    right: 20px;
+    bottom: 300px; 
+    width: 340px;
+    background: rgba(30,30,30,0.95);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 100;
+    display: none; /* Hidden by default */
+}
+
+.legend-header {
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+}
+
+.legend-canvas {
+    width: 100%;
+    height: 20px;
+    border: 1px solid #555;
+    border-radius: 2px;
+}
+
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+/* Info Button Style */
+#infoBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    border: none;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: transform 0.2s, background 0.2s;
+}
+
+#infoBtn:hover {
+    transform: scale(1.1);
+    background: #45a049;
+}
+
+#infoPopup {
+    position: absolute;
+    top: 70px; /* Below the button */
+    right: 20px;
+    width: 340px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 199;
+    display: none; /* Hidden by default */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+</style>
+
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+</head>
+
+<body>
+
+
+<div id="ui-panel">
+
+    <h2>Dust Simulator</h2>
+
+    <div id="drop-zone">
+
+        <p>Drag & Drop .GLB</p>
+
+        <small>
+            Drop a model to replace the default
+        </small>
+
+    </div>
+
+
+    <div class="checkbox-wrapper">
+
+        <input
+            type="checkbox"
+            id="dustToggle"
+        >
+
+        <label for="dustToggle">
+            Enable Dust
+        </label>
+
+    </div>
+
+
+    <div class="control-group">
+
+        <label for="dustColorSelect">
+
+            Dust Type
+
+        </label>
+
+        <select id="dustColorSelect">
+
+            <option value="soot">
+                Soot (Black)
+            </option>
+
+            <option value="indoor">
+                Indoor Dust (Grey)
+            </option>
+			
+            <option value="red">
+                High Visibility (Red)
+            </option>
+            
+            <!-- NEW OPTION ADDED HERE -->
+            <option value="heat">
+                Time to 5% (Heat Map)
+            </option>
+			
+			
+
+        </select>
+
+    </div>
+
+
+    <div class="control-group">
+
+        <label>
+
+            Monthly Coverage Rate
+
+            <span
+                id="rateVal"
+                class="value-display"
+            >
+                1%
+            </span>
+
+        </label>
+
+        <input
+            type="range"
+            id="rateSlider"
+            min="1"
+            max="10"
+            step="0.1"
+            value="1"
+        >
+
+        <small>
+            % surface accumulation per month
+        </small>
+
+    </div>
+
+
+    <div class="control-group">
+
+        <label>
+
+            Time Passed
+
+            <span
+                id="timeVal"
+                class="value-display"
+            >
+                0 Years
+            </span>
+
+        </label>
+
+        <input
+            type="range"
+            id="timeSlider"
+            min="0"
+            max="5"
+            step="0.1"
+            value="0"
+        >
+
+        <small>
+            Years of accumulation
+        </small>
+
+    </div>
+
+
+    <div id="status">
+
+        Loading...
+
+    </div>
+
+</div>
+
+
+<div id="deltaEPanel">
+
+    <div id="deltaEStats">
+
+        ΔE > 1.5 Surface: 0%
+
+    </div>
+
+    <canvas
+        id="histogramCanvas"
+        width="320"
+        height="180"
+    ></canvas>
+
+</div>
+
+<!-- Round Info Button -->
+<button id="infoBtn" title="Show Info">i</button>
+
+<!-- Popup Content -->
+<div id="infoPopup">
+    <p style="margin:0; font-size:14px; line-height:1.5;">
+        Visualise how dust accumulation will change the appearance of a 3D object. 
+        Dust becomes theoretically visible when the color change is ΔE > 1.5. 
+        However, at this level, visibility needs excellent lighting and a clear contrast 
+        with a clean area (for example, a smudge). 
+        <br><br>
+        Research shows that most observers find a surface visibly dusty above 
+        <strong>5% area coverage</strong>. The ongoing research of Xilan Wu at UCL explores whether this perceptual threshold depends on texture, material and context of exhibition.
+		<br><br>
+		This calcualtor is distributed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">GNU General Public License v3.0 (GPL-3.0)</a>. You can cite it as [Grau-Bové, Josep. (2026). "Dust Simulator". UCL Institute for Sustainable Heritage.]
+    </p>
+</div>
+
+<!-- NEW: Legend Panel -->
+<div id="legendPanel">
+    <div class="legend-header">Time to 5% Coverage</div>
+    <canvas id="legendCanvas" class="legend-canvas" width="340" height="20"></canvas>
+    <div class="legend-labels">
+        <span id="legendMinLabel">Fast</span>
+        <span id="legendMaxLabel">Slow</span>
+    </div>
+</div>
+
+
+
+
+<script type="module">
+
+import * as THREE from 'three';
+
+import {
+    OrbitControls
+}
+from 'three/addons/controls/OrbitControls.js';
+
+import {
+    GLTFLoader
+}
+from 'three/addons/loaders/GLTFLoader.js';
+
+
+// ======================================================
+// DEFAULT MODEL
+// ======================================================
+
+const DEFAULT_MODEL =
+    'https://jgraubove.github.io/model.glb';
+
+
+// ======================================================
+// SCENE
+// ======================================================
+
+const scene = new THREE.Scene();
+
+scene.background =
+    new THREE.Color(0x1a1a1a);
+
+
+// ======================================================
+// CAMERA
+// ======================================================
+
+const camera =
+    new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth
+            / window.innerHeight,
+        0.01,
+        1000
+    );
+
+camera.position.set(3,3,5);
+
+
+// ======================================================
+// RENDERER
+// ======================================================
+
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias:true
+    });
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio,2)
+);
+
+renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+// ======================================================
+// CONTROLS
+// ======================================================
+
+const controls =
+    new OrbitControls(
+        camera,
+        renderer.domElement
+    );
+
+controls.enableDamping = true;
+
+
+// ======================================================
+// LIGHTING
+// ======================================================
+
+scene.add(
+    new THREE.AmbientLight(
+        0xffffff,
+        1.2
+    )
+);
+
+const dir1 =
+    new THREE.DirectionalLight(
+        0xffffff,
+        2
+    );
+
+dir1.position.set(5,10,5);
+
+scene.add(dir1);
+
+const dir2 =
+    new THREE.DirectionalLight(
+        0xffffff,
+        1
+    );
+
+dir2.position.set(-5,5,-5);
+
+scene.add(dir2);
+
+
+// ======================================================
+// UI
+// ======================================================
+
+const dropZone =
+    document.getElementById('drop-zone');
+
+const dustToggle =
+    document.getElementById('dustToggle');
+
+const dustColorSelect =
+    document.getElementById('dustColorSelect');
+
+const rateSlider =
+    document.getElementById('rateSlider');
+
+const rateVal =
+    document.getElementById('rateVal');
+
+const timeSlider =
+    document.getElementById('timeSlider');
+
+const timeVal =
+    document.getElementById('timeVal');
+
+const statusDiv =
+    document.getElementById('status');
+
+const histogramCanvas =
+    document.getElementById(
+        'histogramCanvas'
+    );
+
+const histCtx =
+    histogramCanvas.getContext('2d');
+
+const deltaEStats =
+    document.getElementById(
+        'deltaEStats'
+    );
+
+// NEW: Legend Elements
+const legendPanel = document.getElementById('legendPanel');
+const legendCanvas = document.getElementById('legendCanvas');
+const legendCtx = legendCanvas.getContext('2d');
+const legendMinLabel = document.getElementById('legendMinLabel');
+const legendMaxLabel = document.getElementById('legendMaxLabel');
+
+
+// ======================================================
+// STATE
+// ======================================================
+
+let currentModel = null;
+
+
+// ======================================================
+// DUST COLORS
+// ======================================================
+
+const DUST_COLORS = {
+
+    soot:
+        new THREE.Color(
+            0.02,
+            0.02,
+            0.02
+        ),
+		
+	red:
+        new THREE.Color(
+            1,
+            0.00,
+            0.00
+        ),
+
+    indoor:
+        new THREE.Color(
+            0.42,
+            0.38,
+            0.32
+        )
+};
+
+
+// ======================================================
+// STATUS
+// ======================================================
+
+function setStatus(msg, type="neutral"){
+
+    statusDiv.textContent = msg;
+
+    if(type === "error"){
+
+        statusDiv.style.color =
+            "#ff6b6b";
+    }
+    else if(type === "success"){
+
+        statusDiv.style.color =
+            "#4caf50";
+    }
+    else{
+
+        statusDiv.style.color =
+            "#aaa";
+    }
+}
+
+
+// ======================================================
+// COLOR SCIENCE
+// ======================================================
+
+function rgbToLab(color){
+
+    function pivot(n){
+
+        return n > 0.008856
+            ? Math.pow(n,1/3)
+            : (7.787 * n) + 16/116;
+    }
+
+    let r = color.r;
+    let g = color.g;
+    let b = color.b;
+
+    r = r > 0.04045
+        ? Math.pow((r+0.055)/1.055,2.4)
+        : r/12.92;
+
+    g = g > 0.04045
+        ? Math.pow((g+0.055)/1.055,2.4)
+        : g/12.92;
+
+    b = b > 0.04045
+        ? Math.pow((b+0.055)/1.055,2.4)
+        : b/12.92;
+
+    let x =
+        (r*0.4124 + g*0.3576 + b*0.1805)
+        / 0.95047;
+
+    let y =
+        (r*0.2126 + g*0.7152 + b*0.0722);
+
+    let z =
+        (r*0.0193 + g*0.1192 + b*0.9505)
+        / 1.08883;
+
+    x = pivot(x);
+    y = pivot(y);
+    z = pivot(z);
+
+    return {
+
+        L:(116*y)-16,
+
+        a:500*(x-y),
+
+        b:200*(y-z)
+    };
+}
+
+function deltaE76(c1,c2){
+
+    const lab1 = rgbToLab(c1);
+
+    const lab2 = rgbToLab(c2);
+
+    return Math.sqrt(
+
+        Math.pow(lab1.L-lab2.L,2)
+
+        +
+
+        Math.pow(lab1.a-lab2.a,2)
+
+        +
+
+        Math.pow(lab1.b-lab2.b,2)
+    );
+}
+
+
+// ======================================================
+// SHADER
+// ======================================================
+
+function injectDustShader(material){
+
+    if(material.userData.dustInjected)
+        return;
+
+    material.userData.dustInjected = true;
+
+    // Added uRate and uMode for Heat Map
+    material.userData.dustUniforms = {
+
+        uDustOpacity: { value: 0.0 },
+        uDustColor: { value: DUST_COLORS.soot.clone() },
+        uRate: { value: 1.0 },
+        uMode: { value: 0.0 } // 0 = Standard, 1 = Heat Map
+    };
+
+    material.onBeforeCompile = (shader)=>{
+
+        shader.uniforms.uDustOpacity = material.userData.dustUniforms.uDustOpacity;
+        shader.uniforms.uDustColor = material.userData.dustUniforms.uDustColor;
+        shader.uniforms.uRate = material.userData.dustUniforms.uRate;
+        shader.uniforms.uMode = material.userData.dustUniforms.uMode;
+
+        // --- VERTEX SHADER ---
+        shader.vertexShader = shader.vertexShader.replace(
+            '#include <common>',
+            `
+            #include <common>
+            varying vec3 vWorldNormal;
+            `
+        );
+
+        shader.vertexShader = shader.vertexShader.replace(
+            '#include <beginnormal_vertex>',
+            `
+            #include <beginnormal_vertex>
+            vWorldNormal = normalize(mat3(modelMatrix) * objectNormal);
+            `
+        );
+
+        // --- FRAGMENT SHADER ---
+        shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <common>',
+            `
+            #include <common>
+            varying vec3 vWorldNormal;
+            uniform float uDustOpacity;
+            uniform vec3 uDustColor;
+            uniform float uRate;
+            uniform float uMode;
+            
+            // Helper: HSL to RGB for Heat Map
+            vec3 hsl2rgb(vec3 c) {
+                vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0);
+                return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
+            }
+            `
+        );
+
+        shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <dithering_fragment>',
+            `
+            float upwardness = max(vWorldNormal.y, 0.0);
+            
+            if (uMode > 0.5) {
+                // HEAT MAP MODE: Time to 5% Coverage
+                // Target = 5%. Rate = % per month.
+                // Time (months) = 5.0 / (Rate * upwardness)
+                // If upwardness is 0, time is infinite.
+                
+                float safeUpwardness = max(upwardness, 0.001); // Avoid div by zero
+                float monthsTo5 = 5.0 / (uRate * safeUpwardness);
+                float yearsTo5 = monthsTo5 / 12.0;
+                
+                // Define visual range: Min (Fast) to Max (Slow)
+                // We estimate Max visually as 10 years or 2x the fastest time
+                float minTime = 1.0/12.0;
+                float maxTime = 1.0;
+                
+                // Normalize 0..1
+                float t = clamp((yearsTo5 - minTime) / (maxTime - minTime), 0.0, 1.0);
+                
+                // Map to Rainbow (Red=Fast, Purple=Slow)
+                // Hue 0.0 = Red, 0.8 = Purple
+                vec3 heatColor = hsl2rgb(vec3(t * 0.8, 1.0, 0.5));
+                
+                // Apply heat color directly, ignoring base material color slightly for visibility
+                // Mix 80% heat color, 20% original to keep some depth
+                gl_FragColor.rgb = mix(gl_FragColor.rgb, heatColor, 0.8);
+                
+            } else {
+                // STANDARD MODE
+                float dustFactor = clamp(upwardness * uDustOpacity, 0.0, 1.0);
+                gl_FragColor.rgb *= (1.0 - dustFactor);
+                gl_FragColor.rgb += uDustColor * dustFactor;
+            }
+
+            #include <dithering_fragment>
+            `
+        );
+    };
+
+    material.needsUpdate = true;
+}
+
+
+// ======================================================
+// OPACITY
+// ======================================================
+
+function calculateTotalOpacity(){
+
+    const rate =
+        parseFloat(rateSlider.value);
+
+    const years =
+        parseFloat(timeSlider.value);
+
+    const months = years * 12.0;
+
+    let total =
+        (rate * months) / 100.0;
+
+    return Math.min(total,1.0);
+}
+
+
+// ======================================================
+// LEGEND DRAWING
+// ======================================================
+
+function drawLegend() {
+    if (!legendCanvas) return;
+    
+    const w = legendCanvas.width;
+    const h = legendCanvas.height;
+    const ctx = legendCtx;
+
+    // Clear
+    ctx.clearRect(0, 0, w, h);
+
+    // Get current rate to calculate time range
+    const rate = parseFloat(rateSlider.value); // % per month
+    const targetCoverage = 5.0;
+    
+    // Time = Target / (Rate * 12 months)
+    // Min time (max upwardness = 1.0)
+    const minYears = 1/12;
+    
+    // Max time: Cap at 1 year
+    let maxYears = 1;
+
+    // Draw Rainbow Gradient (Horizontal)
+    const gradient = ctx.createLinearGradient(0, 0, w, 0);
+    
+    // Helper to convert HSL to RGB for canvas
+    function hslToRgb(h, s, l) {
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l; 
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
+    }
+
+    // Create gradient stops (Rainbow: Red -> Yellow -> Green -> Cyan -> Blue -> Purple)
+    const stops = [
+        { pos: 0.0, hue: 0.0 },      // Red
+        { pos: 0.2, hue: 0.15 },     // Orange
+        { pos: 0.4, hue: 0.33 },     // Yellow/Green
+        { pos: 0.6, hue: 0.5 },      // Cyan
+        { pos: 0.8, hue: 0.66 },     // Blue
+        { pos: 1.0, hue: 0.8 }       // Purple
+    ];
+
+    stops.forEach(stop => {
+        gradient.addColorStop(stop.pos, hslToRgb(stop.hue, 1.0, 0.5));
+    });
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+
+    // Draw Border
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, w, h);
+
+    // Update Text Labels
+    if (legendMinLabel && legendMaxLabel) {
+        legendMinLabel.textContent = `1 month`;
+        legendMaxLabel.textContent = `12 months`;
+    }
+}
+
+
+// ======================================================
+// HISTOGRAM
+// ======================================================
+
+function drawHistogram(bins){
+
+    const w =
+        histogramCanvas.width;
+
+    const h =
+        histogramCanvas.height;
+
+    histCtx.clearRect(0,0,w,h);
+
+    histCtx.fillStyle =
+        '#181818';
+
+    histCtx.fillRect(0,0,w,h);
+
+
+    // =========================================
+    // REMOVE EMPTY BINS
+    // =========================================
+
+    const filtered = [];
+
+    for(let i=1;i<bins.length;i++){
+
+        if(bins[i] > 0){
+
+            filtered.push({
+
+                value: bins[i],
+
+                index: i
+            });
+        }
+    }
+
+    // Nothing to draw
+    if(filtered.length === 0){
+
+        histCtx.fillStyle =
+            '#888';
+
+        histCtx.font =
+            '14px Segoe UI';
+
+        histCtx.fillText(
+            'No visible ΔE distribution',
+            20,
+            40
+        );
+
+        return;
+    }
+
+
+    // =========================================
+    // GRAPH SCALING
+    // =========================================
+
+    const max =
+        Math.max(
+            ...filtered.map(b=>b.value)
+        );
+
+    const barWidth =
+        w / filtered.length;
+
+
+    // =========================================
+    // DRAW BARS
+    // =========================================
+
+    filtered.forEach((bin,i)=>{
+
+        const barHeight =
+            (bin.value / max)
+            * (h - 50);
+
+        // Highlight bins above ΔE 1.5
+        histCtx.fillStyle =
+            bin.index > 1
+            ? '#4caf50'
+            : '#666';
+
+        histCtx.fillRect(
+
+            i * barWidth + 2,
+
+            h - barHeight - 25,
+
+            barWidth - 4,
+
+            barHeight
+        );
+
+
+        // Bin labels
+        histCtx.fillStyle =
+            '#aaa';
+
+        histCtx.font =
+            '10px Segoe UI';
+
+        histCtx.fillText(
+
+            bin.index.toString(),
+
+            i * barWidth + 4,
+
+            h - 8
+        );
+    });
+
+
+    // =========================================
+    // TITLE
+    // =========================================
+
+    histCtx.fillStyle =
+        '#fff';
+
+    histCtx.font =
+        '13px Segoe UI';
+
+    histCtx.fillText(
+        'ΔE Distribution',
+        10,
+        16
+    );
+
+
+    // =========================================
+    // THRESHOLD LINE
+    // =========================================
+
+    for(let i=0;i<filtered.length;i++){
+
+        if(filtered[i].index >= 2){
+
+            const x =
+                i * barWidth;
+
+            histCtx.strokeStyle =
+                '#ffffff44';
+
+            histCtx.beginPath();
+
+            histCtx.moveTo(x,25);
+
+            histCtx.lineTo(x,h-20);
+
+            histCtx.stroke();
+
+            histCtx.fillStyle =
+                '#fff';
+
+            histCtx.font =
+                '11px Segoe UI';
+
+            histCtx.fillText(
+                'ΔE 1.5',
+                x + 4,
+                36
+            );
+
+            break;
+        }
+    }
+}
+
+
+// ======================================================
+// DELTA E ANALYSIS
+// ======================================================
+
+function updateDeltaEAnalysis(){
+
+    if(!currentModel) return;
+
+    const enabled =
+        dustToggle.checked;
+
+    if(!enabled){
+
+        deltaEStats.textContent =
+            'ΔE > 1.5 Surface: 0%';
+
+        drawHistogram(
+            new Array(20).fill(0)
+        );
+
+        return;
+    }
+
+    // Skip DeltaE analysis for Heat Map mode as it's a visualization, not accumulation
+    if (dustColorSelect.value === 'heat') {
+        deltaEStats.textContent = "Mode: Time to 5% Coverage";
+        drawHistogram(new Array(20).fill(0));
+        return;
+    }
+
+    const opacity =
+        calculateTotalOpacity();
+
+    const dustColor =
+        DUST_COLORS[
+            dustColorSelect.value
+        ];
+
+    const bins =
+        new Array(20).fill(0);
+
+    let aboveThreshold = 0;
+
+    let totalSamples = 0;
+
+    currentModel.traverse((child)=>{
+
+        if(!child.isMesh) return;
+
+        const geometry =
+            child.geometry;
+
+        const normals =
+            geometry.attributes.normal;
+
+        if(!normals) return;
+
+        const materials =
+            Array.isArray(child.material)
+            ? child.material
+            : [child.material];
+
+        materials.forEach((material)=>{
+
+            const baseColor =
+                material.color
+                ? material.color.clone()
+                : new THREE.Color(1,1,1);
+
+            for(
+                let i=0;
+                i<normals.count;
+                i+=5
+            ){
+
+                const ny =
+                    normals.getY(i);
+
+                const upwardness =
+                    Math.max(ny,0);
+
+                const dustFactor =
+                    Math.min(
+                        upwardness * opacity,
+                        1.0
+                    );
+
+                const dusted =
+                    baseColor.clone()
+                    .lerp(
+                        dustColor,
+                        dustFactor
+                    );
+
+                const dE =
+                    deltaE76(
+                        baseColor,
+                        dusted
+                    );
+
+                const bin =
+                    Math.min(
+                        100,
+                        Math.floor(dE)
+                    );
+
+                bins[bin]++;
+
+                if(dE > 1.5){
+
+                    aboveThreshold++;
+                }
+
+                totalSamples++;
+            }
+        });
+    });
+
+    const percentage =
+        totalSamples > 0
+        ? (
+            aboveThreshold
+            / totalSamples
+        ) * 100
+        : 0;
+
+    deltaEStats.textContent =
+        `ΔE > 1.5 Surface: ${percentage.toFixed(1)}%`;
+
+    drawHistogram(bins);
+}
+
+
+// ======================================================
+// CLEAR MODEL
+// ======================================================
+
+function clearCurrentModel(){
+
+    if(!currentModel) return;
+
+    scene.remove(currentModel);
+
+    currentModel.traverse((child)=>{
+
+        if(!child.isMesh) return;
+
+        child.geometry.dispose();
+
+        const materials =
+            Array.isArray(child.material)
+            ? child.material
+            : [child.material];
+
+        materials.forEach((m)=>{
+
+            if(m.map) m.map.dispose();
+
+            m.dispose();
+        });
+    });
+}
+
+
+// ======================================================
+// PROCESS MODEL
+// ======================================================
+
+function processLoadedModel(model){
+
+    clearCurrentModel();
+
+    currentModel = model;
+
+    currentModel.traverse((child)=>{
+
+        if(!child.isMesh) return;
+
+        child.castShadow = true;
+
+        child.receiveShadow = true;
+
+        child.geometry.computeVertexNormals();
+
+        const materials =
+            Array.isArray(child.material)
+            ? child.material
+            : [child.material];
+
+        materials.forEach((material)=>{
+
+            if(
+                material.isMeshStandardMaterial
+                ||
+                material.isMeshPhysicalMaterial
+            ){
+                injectDustShader(material);
+            }
+        });
+    });
+
+    centerAndFrameModel(currentModel);
+
+    scene.add(currentModel);
+
+    applyDustEffect();
+}
+
+
+// ======================================================
+// LOAD GLB
+// ======================================================
+
+function loadGLB(path,label="Model"){
+
+    setStatus(`Loading ${label}...`);
+
+    const loader = new GLTFLoader();
+
+    loader.load(
+
+        path,
+
+        (gltf)=>{
+
+            processLoadedModel(
+                gltf.scene
+            );
+
+            setStatus(
+                `${label} loaded`,
+                "success"
+            );
+        },
+
+        undefined,
+
+        (err)=>{
+
+            console.error(err);
+
+            setStatus(
+                `Failed to load ${label}`,
+                "error"
+            );
+        }
+    );
+}
+
+
+// ======================================================
+// FRAME MODEL
+// ======================================================
+
+function centerAndFrameModel(model){
+
+    const box =
+        new THREE.Box3()
+        .setFromObject(model);
+
+    const center =
+        box.getCenter(
+            new THREE.Vector3()
+        );
+
+    const size =
+        box.getSize(
+            new THREE.Vector3()
+        );
+
+    model.position.sub(center);
+
+    const maxDim =
+        Math.max(
+            size.x,
+            size.y,
+            size.z
+        );
+
+    const distance =
+        maxDim * 1.8;
+
+    camera.position.set(
+        distance,
+        distance,
+        distance
+    );
+
+    camera.near = maxDim / 100;
+
+    camera.far = maxDim * 100;
+
+    camera.updateProjectionMatrix();
+
+    controls.target.set(0,0,0);
+
+    controls.update();
+}
+
+
+// ======================================================
+// APPLY DUST
+// ======================================================
+
+function applyDustEffect(){
+
+    if(!currentModel) return;
+
+    const enabled = dustToggle.checked;
+    const mode = dustColorSelect.value;
+    const isHeatMap = (mode === 'heat');
+
+    // Update Legend Visibility
+    if (legendPanel) {
+        legendPanel.style.display = (enabled && isHeatMap) ? 'block' : 'none';
+    }
+
+    // Draw Legend if needed
+    if (enabled && isHeatMap) {
+        drawLegend();
+    }
+
+    const opacity = enabled ? calculateTotalOpacity() : 0.0;
+    const dustColor = DUST_COLORS[dustColorSelect.value] || DUST_COLORS.soot;
+    const rate = parseFloat(rateSlider.value);
+
+    currentModel.traverse((child)=>{
+
+        if(!child.isMesh) return;
+
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+
+        materials.forEach((material)=>{
+
+            if(material.userData.dustUniforms){
+
+                material.userData.dustUniforms.uDustOpacity.value = opacity;
+                material.userData.dustUniforms.uDustColor.value.copy(dustColor);
+                material.userData.dustUniforms.uRate.value = rate;
+                material.userData.dustUniforms.uMode.value = isHeatMap ? 1.0 : 0.0;
+            }
+        });
+    });
+
+    // Skip DeltaE analysis for Heat Map mode
+    if (!isHeatMap) {
+        updateDeltaEAnalysis();
+    } else {
+        // Just update stats text for heat map
+                deltaEStats.textContent = "Mode: Time to 5% Coverage";
+        drawHistogram(new Array(20).fill(0));
+    }
+}
+
+
+// ======================================================
+// DRAG + DROP
+// ======================================================
+
+[
+    'dragenter',
+    'dragover',
+    'dragleave',
+    'drop'
+].forEach((eventName)=>{
+
+    dropZone.addEventListener(
+        eventName,
+        (e)=>{
+
+            e.preventDefault();
+
+            e.stopPropagation();
+        },
+        false
+    );
+});
+
+[
+    'dragenter',
+    'dragover'
+].forEach((eventName)=>{
+
+    dropZone.addEventListener(
+        eventName,
+        ()=>{
+
+            dropZone.classList.add(
+                'drag-over'
+            );
+        },
+        false
+    );
+});
+
+[
+    'dragleave',
+    'drop'
+].forEach((eventName)=>{
+
+    dropZone.addEventListener(
+        eventName,
+        ()=>{
+
+            dropZone.classList.remove(
+                'drag-over'
+            );
+        },
+        false
+    );
+});
+
+dropZone.addEventListener(
+    'drop',
+    (e)=>{
+
+        const file =
+            e.dataTransfer.files[0];
+
+        if(!file) return;
+
+        if(
+            !file.name
+            .toLowerCase()
+            .endsWith('.glb')
+        ){
+
+            setStatus(
+                "Please drop a GLB file",
+                "error"
+            );
+
+            return;
+        }
+
+        const url =
+            URL.createObjectURL(file);
+
+        loadGLB(url,file.name);
+    }
+);
+
+
+// ======================================================
+// UI EVENTS
+// ======================================================
+
+dustToggle.addEventListener(
+    'change',
+    applyDustEffect
+);
+
+dustColorSelect.addEventListener(
+    'change',
+    applyDustEffect
+);
+
+rateSlider.addEventListener(
+    'input',
+    (e)=>{
+
+        rateVal.textContent =
+            e.target.value + "%";
+
+        applyDustEffect();
+    }
+);
+
+timeSlider.addEventListener(
+    'input',
+    (e)=>{
+
+        timeVal.textContent =
+            e.target.value + " Years";
+
+        applyDustEffect();
+    }
+);
+
+// Info Button Toggle
+const infoBtn = document.getElementById('infoBtn');
+const infoPopup = document.getElementById('infoPopup');
+
+if (infoBtn && infoPopup) {
+    infoBtn.addEventListener('click', () => {
+        const isVisible = infoPopup.style.display === 'block';
+        infoPopup.style.display = isVisible ? 'none' : 'block';
+    });
+
+    // Optional: Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!infoBtn.contains(e.target) && !infoPopup.contains(e.target)) {
+            infoPopup.style.display = 'none';
+        }
+    });
+}
+
+
+// ======================================================
+// RESIZE
+// ======================================================
+
+window.addEventListener(
+    'resize',
+    ()=>{
+
+        camera.aspect =
+            window.innerWidth
+            / window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    }
+);
+
+
+
+// ======================================================
+// START
+// ======================================================
+
+loadGLB(
+    DEFAULT_MODEL,
+    "Default model"
+);
+
+
+// ======================================================
+// LOOP
+// ======================================================
+
+function animate(){
+
+    requestAnimationFrame(animate);
+
+    controls.update();
+
+    renderer.render(scene,camera);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
+		

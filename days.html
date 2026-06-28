@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typical Day & Climate Matrix Explorer</title>
+    
+    <!-- External Asset Matrix -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.27.0/dist/plotly.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <style>
+        .matrix-grid-container { height: 380px; width: 100%; }
+        .plot-container { height: 280px; width: 100%; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        .matte-surface .main-svg {
+            filter: saturate(0.85) contrast(0.95);
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col font-sans overflow-hidden">
+
+    <!-- Top Lesson Status Bar -->
+	<header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+		<div class="flex items-center gap-3">
+			<div class="p-2 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200/60">
+				<i data-lucide="graduation-cap" class="w-6 h-6"></i>
+			</div>
+			<div>
+				<h1 class="text-lg font-black tracking-tight text-slate-900">Diurnal Climate & Cluster Lab</h1>
+				<p class="text-xs text-slate-500">An interactive playground for uncovering typical day microclimatic signatures.</p>
+			</div>
+		</div>
+	</header>
+
+    <!-- Main Split Studio Layout -->
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- LEFT FLANK: Step-by-Step Learning Controller -->
+        <aside class="w-full md:w-96 bg-white border-r border-slate-200 p-6 flex flex-col gap-5 overflow-y-auto shrink-0">
+            
+            <!-- Step 1: Ingestion -->
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                    <span>Step 1</span> • <span>Load Environment Log</span>
+                </div>
+                <div id="dropZone" class="border border-dashed border-slate-300 hover:border-emerald-600 rounded-xl p-4 text-center cursor-pointer bg-slate-50/50 hover:bg-emerald-50/10 transition-all group">
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="hidden">
+                    <i data-lucide="upload-cloud" class="w-5 h-5 mx-auto mb-1 text-slate-400 group-hover:text-emerald-600 transition-all"></i>
+                    <p class="text-xs font-semibold text-slate-700">Drop log file or click here</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Expects standard T & RH sequence data</p>
+                </div>
+            </div>
+
+            <!-- Step 2: Extraction Calibration -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <div class="flex items-center gap-2 text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                    <span>Step 2</span> • <span>Calibrate Focus</span>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Parameter</label>
+                        <select id="paramTarget" class="w-full text-xs rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500" onchange="processAndRender()">
+                            <option value="T" selected>Temperature (°C)</option>
+                            <option value="RH">Relative Humidity (%)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Timeline Filter</label>
+                        <select id="monthFilter" class="w-full text-xs rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500" onchange="processAndRender()">
+                            <option value="all" selected>All Captured Months (Full Horizon)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Algorithmic Control -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <div class="flex items-center gap-2 text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                    <span>Step 3</span> • <span>Machine Learning Setup</span>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Cluster Boundaries (K)</label>
+                        <select id="clusterK" class="w-full text-xs rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500" onchange="processAndRender()">
+                            <option value="2">2 Behavioral Classes</option>
+                            <option value="3" selected>3 Behavioral Classes</option>
+                            <option value="4">4 Behavioral Classes</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="changeWaffleLayout('chrono')" id="btn-waffle-chrono" class="py-1.5 px-2 text-[10px] font-bold uppercase rounded-md bg-emerald-600 text-white shadow-sm transition-all">Chronological</button>
+                        <button onclick="changeWaffleLayout('hierarchical')" id="btn-waffle-hierarchical" class="py-1.5 px-2 text-[10px] font-bold uppercase rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">By Similarity</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Elbow Evaluation Container Card -->
+            <div id="elbowCardNode" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 relative">
+                <button onclick="showExplainer('elbow')" class="absolute top-2 right-2 z-10 p-1 bg-white hover:bg-slate-200 rounded border border-slate-200 text-slate-500 transition-all flex items-center gap-1 text-[9px] font-bold uppercase shadow-sm">
+                    <i data-lucide="help-circle" class="w-3 h-3"></i> Explain
+                </button>
+                <div id="plot-elbow" class="h-32 w-full mt-3"></div>
+            </div>
+
+            <!-- THE PEDAGOGICAL COACH FRAMEWORK -->
+            <div class="mt-auto bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    <i data-lucide="compass" class="w-4 h-4 text-emerald-600"></i>
+                    <span>ALEC Learning Coach</span>
+                </div>
+                <p id="coachText" class="text-[11px] text-slate-500 leading-relaxed">
+                    Welcome to the lab. Upload an environmental climate log file to begin. We will decompose your calendar data into a 24-hour baseline matrix and train a machine learning algorithm to automatically discover hidden building operation signatures.
+                </p>
+            </div>
+        </aside>
+
+        <!-- RIGHT FLANK: Integrated Discovery Studio Canvas -->
+        <main class="flex-1 bg-slate-50 p-6 overflow-y-auto space-y-6">
+            
+            <div id="blankPlaceholder" class="h-full flex flex-col items-center justify-center text-center text-slate-400 p-12">
+                <i data-lucide="database" class="w-12 h-12 mb-3 stroke-1 text-slate-300"></i>
+                <h3 class="text-sm font-bold text-slate-600">No Log Sequence Uploaded</h3>
+                <p class="text-xs text-slate-400 max-w-sm mt-1">Drag and drop a .csv or .xlsx deployment data file into the left panel to unlock interactive lab analytics.</p>
+            </div>
+
+            <div id="activeStudioWorkspace" class="hidden space-y-6">
+                
+		<!-- Section A: The 24x365 Carpet Matrix Map Card -->
+		<div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col">
+			
+			<div class="layout-surface matte-surface">
+				<div id="plot-waffle" class="matrix-grid-container"></div>
+			</div>
+
+			<!-- Color Scale & Explainer Controls (Moved below the plot, aligned right) -->
+			<div class="flex items-center justify-end gap-2 mt-2">
+			<select id="colorScaleSelect" onchange="renderWaffleChart()" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-500 transition-all text-[10px] font-bold uppercase cursor-pointer outline-none border border-slate-200">
+				<option value="thermal">Thermal (B&W Safe)</option>
+				<option value="rdbu">Blue-Red</option>
+				<option value="rainbow">Rainbow</option>
+				<option value="blues" selected>Continuous Blue</option> <!-- Added 'selected' here -->
+			</select>
+				<button onclick="showExplainer('matrix')" class="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-500 transition-all flex items-center gap-1 text-[10px] font-bold uppercase border border-slate-200">
+					<i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Explain Plot
+				</button>
+			</div>
+			
+		</div>
+
+                <!-- Section B: Split Dual Analytic Vector Cards -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Decile Graph -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative">
+                        <button onclick="showExplainer('diurnal')" class="absolute top-4 right-4 z-10 p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-500 transition-all flex items-center gap-1 text-[10px] font-bold uppercase">
+                            <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Explain
+                        </button>
+                        <div id="plot-diurnal" class="plot-container"></div>
+                    </div>
+                    
+                    <!-- Cluster Vector Graph -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative">
+                        <button onclick="showExplainer('clustering')" class="absolute top-4 right-4 z-10 p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-500 transition-all flex items-center gap-1 text-[10px] font-bold uppercase">
+                            <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Explain
+                        </button>
+                        <div id="plot-clusters" class="plot-container"></div>
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript Execution Engine Matrix -->
+    <script>
+        let masterTimeline = []; 
+        let dailyVectors = [];   
+        let clusterAssignments = [];
+        let clusterCentroids = [];
+        let waffleLayoutMode = 'chrono'; 
+        const clusterColors = ['#16a34a', '#dc2626', '#2563eb', '#db2777'];
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-emerald-600', 'bg-emerald-50/30'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-emerald-600', 'bg-emerald-50/30'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-emerald-600', 'bg-emerald-50/30');
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                processRawFile(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) processRawFile(e.target.files[0]); });
+
+        const explainerText = {
+            matrix: "<strong>Pedagogical Insight (Carpet Matrix):</strong> The horizontal axis spans 24 hours (00:00 to 23:00). When toggled to <strong>Chronological</strong>, calendar history cascades top-to-bottom. When switched to <strong>By Similarity</strong>, identical days organically group together, forming dense blocks that show recurring environmental behaviors across the timeline.",
+            diurnal: "<strong>Pedagogical Insight (Decile Shadows):</strong> Rather than calculating raw average lines, this maps every individual decile channel (10th to 90th percentile) radiating outward from the central 50th percentile (Median). Tight ribbons show predictable cycles; sprawling fields reveal high operational volatility.",
+            clustering: "<strong>Pedagogical Insight (K-Means Regimes):</strong> Every day is mathematically partitioned across high-dimensional space into groups of matching physical similarity. The bold paths indicate the statistical centroid center of each distinct operational regime.",
+            elbow: "<strong>Pedagogical Insight (Elbow Evaluation):</strong> This plots the Within-Cluster Sum of Squares (WCSS) variance score against different numbers of clusters (K). Look for the 'elbow' or inflection point where variance stops dropping rapidly to determine the optimal number of groups to use."
+        };
+
+        function showExplainer(id) {
+            document.getElementById('coachText').innerHTML = explainerText[id];
+        }
+
+        function getPercentile(arr, p) {
+            if (arr.length === 0) return 0;
+            const sorted = [...arr].sort((a, b) => a - b);
+            const index = (p / 100) * (sorted.length - 1);
+            const lower = Math.floor(index);
+            const upper = Math.ceil(index);
+            const weight = index - lower;
+            return sorted[lower] * (1 - weight) + sorted[upper] * weight;
+        }
+
+        function processRawFile(file) {
+            const r = new FileReader();
+            const isCSV = file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt');
+            
+            
+            if (isCSV) {
+                r.onload = function(e) { parseMatrixArray(parseTextCSV(e.target.result), file.name); };
+                r.readAsText(file);
+            } else {
+                r.onload = function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array', cellDates: true });
+                    const matrix = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+                    parseMatrixArray(matrix, file.name);
+                };
+                r.readAsArrayBuffer(file);
+            }
+        }
+
+        function parseTextCSV(text) {
+            return text.split(/\r?\n/).filter(line => line.trim()).map(line => {
+                let sep = line.includes(';') ? ';' : (line.includes('\t') ? '\t' : ',');
+                return line.split(sep).map(f => f.trim().replace(/^["']|["']$/g, ''));
+            });
+        }
+
+        function parseMatrixArray(matrix, name) {
+            if (matrix.length < 2) return;
+            let startIdx = (isNaN(parseFloat(matrix[0][1])) && isNaN(parseFloat(matrix[0][2]))) ? 1 : 0;
+            masterTimeline = [];
+            
+            for (let i = startIdx; i < matrix.length; i++) {
+                const r = matrix[i];
+                if (!r || r.length < 2) continue;
+                let rawDate = new Date(r[0]);
+                let rawT = parseFloat(r[1]);
+                let rawRH = parseFloat(r[2]);
+                if (!isNaN(rawDate.getTime()) && !isNaN(rawT) && !isNaN(rawRH)) {
+                    masterTimeline.push({ date: rawDate, T: rawT, RH: rawRH });
+                }
+            }
+
+            buildMonthFilterOptions();
+            
+            document.getElementById('blankPlaceholder').classList.add('hidden');
+            document.getElementById('activeStudioWorkspace').classList.remove('hidden');
+            document.getElementById('elbowCardNode').classList.remove('hidden');
+            
+            processAndRender();
+        }
+
+        function buildMonthFilterOptions() {
+            const select = document.getElementById('monthFilter');
+            select.innerHTML = '<option value="all" selected>All Captured Months</option>';
+            const encountered = new Set();
+            const names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            masterTimeline.forEach(pt => {
+                let m = pt.date.getMonth();
+                if (!encountered.has(m)) {
+                    encountered.add(m);
+                    let opt = document.createElement('option');
+                    opt.value = m;
+                    opt.innerText = names[m];
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function processAndRender() {
+            if (masterTimeline.length === 0) return;
+            const targetParam = document.getElementById('paramTarget').value;
+            const targetMonth = document.getElementById('monthFilter').value;
+            
+            const dateGroups = {};
+            masterTimeline.forEach(pt => {
+                let m = pt.date.getMonth();
+                if (targetMonth !== 'all' && parseInt(targetMonth) !== m) return;
+                let dateStr = pt.date.toISOString().slice(0, 10);
+                let hour = pt.date.getHours();
+                if (!dateGroups[dateStr]) {
+                    dateGroups[dateStr] = { month: m, hours: Array(24).fill(null).map(() => []) };
+                }
+                dateGroups[dateStr].hours[hour].push(targetParam === 'T' ? pt.T : pt.RH);
+            });
+
+            dailyVectors = [];
+            Object.keys(dateGroups).sort().forEach(dStr => {
+                let bins = dateGroups[dStr].hours;
+                let vector = [];
+                for (let h = 0; h < 24; h++) {
+                    if (bins[h].length === 0) {
+                        let fallback = (h > 0 && vector[h-1] !== null) ? vector[h-1] : null;
+                        vector.push(fallback);
+                    } else {
+                        vector.push(bins[h].reduce((a, b) => a + b, 0) / bins[h].length);
+                    }
+                }
+                if (vector.filter(v => v === null).length === 0) {
+                    dailyVectors.push({ dateStr: dStr, values: vector });
+                }
+            });
+
+            requestAnimationFrame(() => {
+                try {
+                    runKMeansClustering();
+                    renderWaffleChart();
+                    renderElbowPlot();
+                    renderTypicalDayCharts();
+                    updateLearningCoach();
+                } catch (error) {
+                    console.error("Visualisation Engine Error:", error);
+                }
+            });
+        }
+
+        function runKMeansEngineForK(kCount, dataset) {
+            let centroids = [];
+            for (let i = 0; i < kCount; i++) {
+                centroids.push([...dataset[Math.floor(i * dataset.length / kCount)]]);
+            }
+            let assignments = Array(dataset.length).fill(-1);
+            let wcss = 0;
+
+            for (let iter = 0; iter < 10; iter++) {
+                for (let i = 0; i < dataset.length; i++) {
+                    let minD = Infinity, bestK = 0;
+                    for (let k = 0; k < kCount; k++) {
+                        let d = 0;
+                        for (let h = 0; h < 24; h++) { d += Math.pow(dataset[i][h] - centroids[k][h], 2); }
+                        if (d < minD) { minD = d; bestK = k; }
+                    }
+                    assignments[i] = bestK;
+                }
+                for (let k = 0; k < kCount; k++) {
+                    let members = dataset.filter((_, idx) => assignments[idx] === k);
+                    if (members.length > 0) {
+                        let newCenter = Array(24).fill(0);
+                        for (let h = 0; h < 24; h++) {
+                            newCenter[h] = members.reduce((s, m) => s + m[h], 0) / members.length;
+                        }
+                        centroids[k] = newCenter;
+                    }
+                }
+            }
+            
+            for (let i = 0; i < dataset.length; i++) {
+                let k = assignments[i];
+                for (let h = 0; h < 24; h++) { wcss += Math.pow(dataset[i][h] - centroids[k][h], 2); }
+            }
+            return { wcss, assignments, centroids };
+        }
+
+        function runKMeansClustering() {
+            const K = parseInt(document.getElementById('clusterK').value);
+            let dataset = dailyVectors.map(v => v.values);
+            let result = runKMeansEngineForK(K, dataset);
+            clusterAssignments = result.assignments;
+            clusterCentroids = result.centroids;
+            
+            // Tally the total number of days assigned to each cluster
+            let clusterCounts = new Array(K).fill(0);
+            clusterAssignments.forEach(k => {
+                if (k >= 0) clusterCounts[k]++;
+            });
+
+            const hoursX = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+            let traces = [];
+            dailyVectors.forEach((v, idx) => {
+                traces.push({
+                    x: hoursX, y: v.values, mode: 'lines',
+                    line: { color: clusterColors[clusterAssignments[idx]], width: 0.5, opacity: 0.12 },
+                    hoverinfo: 'none', showlegend: false
+                });
+            });
+            for (let k = 0; k < K; k++) {
+                traces.push({
+                    x: hoursX, y: clusterCentroids[k], mode: 'lines',
+                    name: `Regime ${k + 1} (n=${clusterCounts[k]})`, // Added count to legend
+                    line: { color: clusterColors[k], width: 3.5 }
+                });
+            }
+            let layout = {
+                title: { text: `K-Means Regime Profile Splitting`, font: { size: 12, color: '#475569', weight: 'bold' } },
+                xaxis: { title: 'Hour', gridcolor: '#f1f5f9', tickangle: -45 },
+                yaxis: { title: 'Value', gridcolor: '#f1f5f9' },
+                margin: { t: 40, b: 50, l: 45, r: 15 },
+                legend: { font: { size: 9 }, bgcolor: 'transparent', orientation: 'h', y: 1.15 },
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+            Plotly.newPlot('plot-clusters', traces, layout, { responsive: true });
+        }
+
+        function renderElbowPlot() {
+            let dataset = dailyVectors.map(v => v.values);
+            let xK = [1, 2, 3, 4, 5];
+            let yWcss = [];
+
+            let totalWcss = 0;
+            if(dataset.length > 0) {
+                let meanDay = Array(24).fill(0);
+                for(let h=0; h<24; h++) {
+                    meanDay[h] = dataset.reduce((s,d) => s + d[h], 0) / dataset.length;
+                }
+                for(let i=0; i<dataset.length; i++) {
+                    for(let h=0; h<24; h++) { totalWcss += Math.pow(dataset[i][h] - meanDay[h], 2); }
+                }
+            }
+            yWcss.push(totalWcss);
+
+            for (let k = 2; k <= 5; k++) {
+                yWcss.push(runKMeansEngineForK(k, dataset).wcss);
+            }
+
+            let trace = {
+                x: xK, y: yWcss, mode: 'lines+markers',
+                line: { color: '#047857', width: 2 },
+                marker: { size: 6 }
+            };
+            let layout = {
+                title: { text: 'Mathematical Elbow Plot Score', font: { size: 10, color: '#475569', weight: 'bold' } },
+                xaxis: { title: 'Clusters K', tickvals: xK },
+                yaxis: { title: 'Variance (WCSS)', showticklabels: false },
+                margin: { t: 25, b: 30, l: 15, r: 15 },
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+            Plotly.newPlot('plot-elbow', [trace], layout, { responsive: true, displayModeBar: false });
+        }
+
+        function renderWaffleChart() {
+            const hoursX = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+            let nodes = dailyVectors.map((v, idx) => ({ idx: idx, dateStr: v.dateStr, cluster: clusterAssignments[idx], values: v.values }));
+
+            if (waffleLayoutMode === 'hierarchical') {
+                nodes.sort((a, b) => a.cluster - b.cluster || a.dateStr.localeCompare(b.dateStr));
+            } else {
+                nodes.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+            }
+
+            let zMatrix = [], yLabels = [];
+            nodes.forEach(node => { zMatrix.push(node.values); yLabels.push(node.dateStr); });
+
+            // Read the dynamically selected color scale
+            const scaleChoice = document.getElementById('colorScaleSelect').value;
+            let activeScale;
+            switch(scaleChoice) {
+                case 'rdbu': 
+                    activeScale = [[0, '#313695'], [0.5, '#ffffbf'], [1, '#a50026']]; // Plotly style Blue to Red
+                    break;
+                case 'rainbow': 
+                    activeScale = 'Jet';
+                    break;
+                case 'blues': 
+                    activeScale = 'Blues';
+                    break;
+                case 'thermal': 
+                default:
+                    activeScale = [[0.0, '#000004'], [0.2, '#3b0f70'], [0.4, '#8c2981'], [0.6, '#de4968'], [0.8, '#fe9f6d'], [1.0, '#fcfdbf']];
+            }
+
+            let traces = [{
+                z: zMatrix, x: hoursX, y: yLabels, type: 'heatmap',
+                colorscale: activeScale,
+                showscale: true,
+                colorbar: { thickness: 12, len: 0.9, tickcolor: '#64748b' },
+                hovertemplate: '<b>Date</b>: %{y}<br><b>Hour</b>: %{x}<br><b>Value</b>: %{z:.2f}<extra></extra>'
+            }];
+
+            let layout = {
+                xaxis: { gridcolor: '#f1f5f9', fixedrange: true, tickangle: -45 },
+                yaxis: { autorange: 'reversed', showticklabels: nodes.length <= 31, fixedrange: true, type: 'category' },
+                margin: { t: 10, b: 50, l: nodes.length <= 31 ? 80 : 40, r: 15 },
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+
+            Plotly.newPlot('plot-waffle', traces, layout, { responsive: true, displayModeBar: false });
+        }
+
+        function renderTypicalDayCharts() {
+            const hoursX = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+            let hourlyMatrix = Array.from({ length: 24 }, () => []);
+            dailyVectors.forEach(v => {
+                for (let h = 0; h < 24; h++) { hourlyMatrix[h].push(v.values[h]); }
+            });
+
+            let deciles = { 10:[], 20:[], 30:[], 40:[], 50:[], 60:[], 70:[], 80:[], 90:[] };
+            for (let h = 0; h < 24; h++) {
+                Object.keys(deciles).forEach(d => { deciles[d].push(getPercentile(hourlyMatrix[h], parseInt(d))); });
+            }
+
+            let traces = [];
+            const baseColor = document.getElementById('paramTarget').value === 'T' ? '220, 38, 38' : '37, 99, 235'; 
+            const pairs = [{ h: 90, l: 10, a: 0.04 }, { h: 80, l: 20, a: 0.06 }, { h: 70, l: 30, a: 0.08 }, { h: 60, l: 40, a: 0.10 }];
+
+			pairs.forEach(p => {
+				traces.push({
+					x: hoursX.concat([...hoursX].reverse()), y: deciles[p.h].concat([...deciles[p.l]].reverse()),
+					fill: 'toself', fillcolor: `rgba(${baseColor}, ${p.a})`, line: { color: 'transparent' },
+					showlegend: false,
+					name: `${p.h}th - ${p.l}th Percentile` // <-- Add this line
+				});
+			});
+
+            traces.push({ x: hoursX, y: deciles[50], mode: 'lines', name: 'Median Path', line: { color: `rgb(${baseColor})`, width: 2.5 } });
+            let layout = {
+                title: { text: 'Continuous Decile Distribution Profile', font: { size: 12, color: '#475569', weight: 'bold' } },
+                xaxis: { title: 'Hour', gridcolor: '#f1f5f9', tickangle: -45 },
+                yaxis: { gridcolor: '#f1f5f9' },
+                margin: { t: 40, b: 50, l: 45, r: 15 },
+                legend: { font: { size: 9 }, bgcolor: 'transparent', orientation: 'h', y: 1.15 },
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+            Plotly.newPlot('plot-diurnal', traces, layout, { responsive: true });
+        }
+
+        function changeWaffleLayout(mode) {
+            waffleLayoutMode = mode;
+            const btnChrono = document.getElementById('btn-waffle-chrono');
+            const btnHier = document.getElementById('btn-waffle-hierarchical');
+            if (mode === 'chrono') {
+                btnChrono.className = "py-1.5 px-2 text-[10px] font-bold uppercase rounded-md bg-emerald-600 text-white shadow-sm transition-all";
+                btnHier.className = "py-1.5 px-2 text-[10px] font-bold uppercase rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+            } else {
+                btnHier.className = "py-1.5 px-2 text-[10px] font-bold uppercase rounded-md bg-emerald-600 text-white shadow-sm transition-all";
+                btnChrono.className = "py-1.5 px-2 text-[10px] font-bold uppercase rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+            }
+            renderWaffleChart();
+            updateLearningCoach();
+        }
+
+        function updateLearningCoach() {
+            const textEl = document.getElementById('coachText');
+            textEl.innerHTML = `<strong>Status Update:</strong> Lab rendering updated successfully. Click any "Explain Plot" button to learn how to interpret the visualizations.`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });
+    </script>
+</body>
+</html>

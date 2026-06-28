@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RH Difference Decision Tool</title>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.6/jstat.min.js"></script>
+
+<style>
+:root {
+    --bg: #f4f4f9;
+    --card: #ffffff;
+    --text: #333;
+    --accent: #2c3e50;
+    --m1: #e74c3c;   /* red */
+    --m2: #3498db;   /* blue */
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
+    background: var(--bg);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    background: var(--card);
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 950px;
+    width: 100%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: var(--accent);
+}
+
+.input-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.input-column {
+    padding: 15px;
+    border-radius: 8px;
+    background: #fafafa;
+    border-left: 5px solid var(--accent);
+}
+
+.input-column.m1 {
+    border-left-color: var(--m1);
+}
+
+.input-column.m2 {
+    border-left-color: var(--m2);
+}
+
+label {
+    display: block;
+    margin-top: 8px;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+
+h2 {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.subtext {
+    text-align: center;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 5px solid var(--accent);
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+.question {
+    color: #555;
+    font-size: 0.95em;
+}
+
+.final {
+    margin-top: 25px;
+    padding: 18px;
+    background: #f1f3f5;
+    border-radius: 10px;
+    font-size: 1.15em;
+    font-weight: 600;
+    text-align: center;
+}
+
+#plot-container {
+    margin-top: 25px;
+    height: 420px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Are these RH environments different?</h1>
+
+<div class="input-group">
+
+<div class="input-column m1">
+<h3>Measurement 1</h3>
+<label>Mean RH (%)</label>
+<input type="number" id="m1" value="50">
+<label>Standard deviation</label>
+<input type="number" id="sd1" value="1.5">
+<label>Sample size</label>
+<input type="number" id="n1" value="30">
+</div>
+
+<div class="input-column m2">
+<h3>Measurement 2</h3>
+<label>Mean RH (%)</label>
+<input type="number" id="m2" value="46">
+<label>Standard deviation</label>
+<input type="number" id="sd2" value="1.5">
+<label>Sample size</label>
+<input type="number" id="n2" value="30">
+</div>
+
+</div>
+
+<h2>Decision support</h2>
+<p class="subtext">
+Is the difference meaningful for conservation practice, and is there statistical evidence for it?
+</p>
+
+<div class="cards">
+
+<div class="card">
+<h3>Practical significance</h3>
+<p class="question">
+Is the difference large compared to measurement uncertainty?
+</p>
+<div id="ratio-box"></div>
+</div>
+
+<div class="card">
+<h3>Statistical evidence (Welch test)</h3>
+<p class="question">
+Is there evidence the two means are genuinely different?
+</p>
+<div id="welch-box"></div>
+</div>
+
+</div>
+
+<div class="final" id="final-box"></div>
+
+<div id="plot-container"></div>
+
+<details style="margin-top:25px;">
+<summary>About this tool</summary>
+
+<div class="readme-content">
+
+<p>
+At first sight, the question seems simple:
+<b>Are these two RH measurements different?</b>
+</p>
+
+<p>
+In practice, this can mean two different things.
+</p>
+
+<h3>1. Is there evidence that the environments are genuinely different?</h3>
+
+<p>
+This is a statistical question. The tool uses Welch's t-test to assess whether the observed difference could plausibly arise from normal variation in the measurements.
+</p>
+
+<h3>2. Is the difference large enough to matter?</h3>
+
+<p>
+This is a practical question. Even if a difference is statistically detectable, it may be small compared with measurement uncertainty and therefore of limited importance for conservation decisions.
+</p>
+
+<h3>Why show both?</h3>
+
+<p>
+A difference can be statistically significant but too small to be practically important. Equally, a potentially important difference may not reach statistical significance if only a small amount of data is available.
+</p>
+
+<p>
+For this reason, the tool reports both:
+</p>
+
+<ul>
+<li><b>Practical significance</b> — is the difference large relative to uncertainty?</li>
+<li><b>Statistical evidence</b> — is there evidence that the difference is real?</li>
+</ul>
+
+<p>
+The overall interpretation combines these two perspectives to support conservation decision-making.
+</p>
+
+</div>
+</details>
+
+</div>
+
+<script>
+
+function calculate() {
+
+const m1 = parseFloat(document.getElementById('m1').value);
+const sd1 = parseFloat(document.getElementById('sd1').value);
+const n1 = parseInt(document.getElementById('n1').value);
+
+const m2 = parseFloat(document.getElementById('m2').value);
+const sd2 = parseFloat(document.getElementById('sd2').value);
+const n2 = parseInt(document.getElementById('n2').value);
+
+if ([m1, sd1, n1, m2, sd2, n2].some(v => isNaN(v) || v <= 0)) return;
+
+const diff = m1 - m2;
+
+// Welch SE
+const se = Math.sqrt((sd1*sd1)/n1 + (sd2*sd2)/n2);
+
+// t statistic
+const t = diff / se;
+
+// Welch df
+const num = Math.pow((sd1*sd1)/n1 + (sd2*sd2)/n2, 2);
+const den =
+Math.pow((sd1*sd1)/n1,2)/(n1-1) +
+Math.pow((sd2*sd2)/n2,2)/(n2-1);
+
+const df = num / den;
+
+// p-value
+const p = 2 * (1 - jStat.studentt.cdf(Math.abs(t), df));
+
+// CI (optional internal use)
+const tcrit = jStat.studentt.inv(0.975, df);
+const ciL = diff - tcrit * se;
+const ciU = diff + tcrit * se;
+
+// Practical ratio
+const combinedU = Math.sqrt(sd1*sd1 + sd2*sd2);
+const ratio = Math.abs(diff) / combinedU;
+
+let practical;
+if (ratio < 1) practical = "Indistinguishable in practice";
+else if (ratio < 2) practical = "Borderline difference";
+else if (ratio < 3) practical = "Possibly meaningful difference";
+else practical = "Likely meaningful difference";
+
+// Statistical interpretation
+let stats;
+if (p < 0.05) stats = "Evidence suggests a real difference";
+else stats = "No strong statistical evidence of a difference";
+
+// Final decision logic
+let final;
+
+if (ratio > 2 && p < 0.05) {
+    final = "Likely different environments (practical and statistical agreement).";
+} else if (ratio > 2 && p >= 0.05) {
+    final = "Possibly different, but evidence is uncertain.";
+} else if (ratio <= 2 && p < 0.05) {
+    final = "Statistically different, but difference may be small in practice.";
+} else {
+    final = "No clear evidence of a meaningful difference.";
+}
+
+// OUTPUT
+
+document.getElementById('ratio-box').innerHTML = `
+<b>Uncertainty ratio:</b> ${ratio.toFixed(2)}<br>
+${practical}
+`;
+
+document.getElementById('welch-box').innerHTML = `
+<b>Difference:</b> ${diff.toFixed(2)} %RH<br>
+<b>95% CI:</b> [${ciL.toFixed(2)}, ${ciU.toFixed(2)}] %RH<br>
+<b>p:</b> ${p.toExponential(2)}<br>
+${stats}
+`;
+
+document.getElementById('final-box').textContent = final;
+
+generatePlot(m1, sd1, m2, sd2);
+
+}
+
+function generatePlot(m1, sd1, m2, sd2) {
+
+const minX = Math.min(m1, m2) - 5*Math.max(sd1, sd2);
+const maxX = Math.max(m1, m2) + 5*Math.max(sd1, sd2);
+
+const x = [];
+for (let i=0;i<200;i++){
+x.push(minX + (i/199)*(maxX-minX));
+}
+
+const y1 = x.map(v => jStat.normal.pdf(v, m1, sd1));
+const y2 = x.map(v => jStat.normal.pdf(v, m2, sd2));
+
+Plotly.newPlot("plot-container", [
+{
+    x: x,
+    y: y1,
+    name: "Measurement 1",
+    mode: "lines",
+    line: { color: getComputedStyle(document.documentElement).getPropertyValue('--m1').trim(), width: 3 }
+},
+{
+    x: x,
+    y: y2,
+    name: "Measurement 2",
+    mode: "lines",
+    line: { color: getComputedStyle(document.documentElement).getPropertyValue('--m2').trim(), width: 3 }
+}
+], {
+xaxis: { title: "%RH" },
+yaxis: { title: "Density" },
+showlegend: true
+});
+
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+calculate();
+document.querySelectorAll("input").forEach(i =>
+i.addEventListener("input", calculate)
+);
+});
+
+</script>
+
+</body>
+</html>
